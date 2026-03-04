@@ -2,153 +2,269 @@
   <div class="calendar-view">
     <div class="page-header">
       <h1>Takvim</h1>
-      <p class="subtitle">Dijital pazarlama görevlerinizi ve önemli tarihleri takip edin</p>
+      <p class="subtitle">Görev teslim tarihlerini takip edin ve doğrudan ilgili göreve geçin.</p>
     </div>
-    
+
     <div class="calendar-container card">
       <div class="calendar-header">
         <div class="calendar-nav">
-          <button class="btn-icon" aria-label="Önceki Ay">&lt;</button>
-          <h2 class="current-month">Nisan 2025</h2>
-          <button class="btn-icon" aria-label="Sonraki Ay">&gt;</button>
+          <button class="btn-icon" aria-label="Önceki Ay" @click="goPreviousMonth">&lt;</button>
+          <h2 class="current-month">{{ monthLabel }}</h2>
+          <button class="btn-icon" aria-label="Sonraki Ay" @click="goNextMonth">&gt;</button>
         </div>
-        
-        <div class="view-options">
-          <div class="tab active">Ay</div>
-          <div class="tab">Hafta</div>
-          <div class="tab">Gün</div>
-        </div>
+        <button class="btn btn-outline" @click="goToToday">Bugüne Dön</button>
       </div>
-      
+
       <div class="calendar-weekdays">
-        <div class="weekday">Pzt</div>
-        <div class="weekday">Sal</div>
-        <div class="weekday">Çar</div>
-        <div class="weekday">Per</div>
-        <div class="weekday">Cum</div>
-        <div class="weekday">Cmt</div>
-        <div class="weekday">Paz</div>
+        <div v-for="weekday in weekdays" :key="weekday" class="weekday">{{ weekday }}</div>
       </div>
-      
+
       <div class="calendar-days">
-        <!-- Previous month days (greyed out) -->
-        <div class="day prev-month">31</div>
-        
-        <!-- Current month days -->
-        <div class="day">1</div>
-        <div class="day">2</div>
-        <div class="day">3</div>
-        <div class="day">4</div>
-        <div class="day">5</div>
-        <div class="day">6</div>
-        <div class="day">7</div>
-        <div class="day">8</div>
-        <div class="day">9</div>
-        <div class="day has-events">
-          10
-          <div class="day-indicator"></div>
-        </div>
-        <div class="day">11</div>
-        <div class="day">12</div>
-        <div class="day">13</div>
-        <div class="day">14</div>
-        <div class="day">15</div>
-        <div class="day">16</div>
-        <div class="day has-events">
-          17
-          <div class="day-indicator">1</div>
-        </div>
-        <div class="day">18</div>
-        <div class="day">19</div>
-        <div class="day">20</div>
-        <div class="day">21</div>
-        <div class="day">22</div>
-        <div class="day">23</div>
-        <div class="day has-events">
-          24
-          <div class="day-indicator">1</div>
-        </div>
-        <div class="day">25</div>
-        <div class="day">26</div>
-        <div class="day">27</div>
-        <div class="day">28</div>
-        <div class="day">29</div>
-        <div class="day">30</div>
-        
-        <!-- Next month days (greyed out) -->
-        <div class="day next-month">1</div>
-        <div class="day next-month">2</div>
-        <div class="day next-month">3</div>
-        <div class="day next-month">4</div>
+        <button
+          v-for="cell in calendarCells"
+          :key="cell.dateKey"
+          type="button"
+          class="day"
+          :class="{
+            'prev-month': !cell.isCurrentMonth,
+            'has-events': cell.eventCount > 0,
+            'is-today': cell.isToday,
+            'is-selected': cell.dateKey === selectedDateKey
+          }"
+          @click="selectDate(cell.dateKey)"
+        >
+          <span class="day-number">{{ cell.dayNumber }}</span>
+          <span v-if="cell.eventCount > 0" class="day-indicator">{{ cell.eventCount }}</span>
+        </button>
       </div>
     </div>
-    
+
+    <div class="events-panel card">
+      <h2 class="card-title">{{ selectedDateLabel }} Etkinlikleri</h2>
+
+      <div v-if="selectedEvents.length" class="event-list">
+        <article v-for="event in selectedEvents" :key="event.id" class="event-item">
+          <div class="event-date">
+            <div class="date-num">{{ event.dayLabel }}</div>
+            <div class="date-month">{{ event.monthLabel }}</div>
+          </div>
+          <div class="event-details">
+            <h3 class="event-title">{{ event.title }}</h3>
+            <p class="event-description">{{ event.description }}</p>
+            <div class="event-meta">
+              <span class="event-type task">Görev Teslimi</span>
+              <span class="event-level">Seviye {{ event.levelId }} · {{ event.levelTitle }}</span>
+              <span class="event-status" :class="event.statusClass">{{ event.status }}</span>
+            </div>
+          </div>
+          <router-link :to="`/task/${event.taskId}`" class="btn btn-outline">Göreve Git</router-link>
+        </article>
+      </div>
+
+      <div v-else class="empty-events">
+        <p>Seçtiğiniz gün için görev teslimi bulunmuyor.</p>
+      </div>
+    </div>
+
     <div class="upcoming-events card">
-      <h2 class="card-title">Yaklaşan Görevler ve Etkinlikler</h2>
-      
-      <div class="event-list">
-        <div class="event-item">
+      <h2 class="card-title">Yaklaşan Teslimler</h2>
+
+      <div v-if="upcomingEvents.length" class="event-list">
+        <article v-for="event in upcomingEvents" :key="`upcoming-${event.id}`" class="event-item compact">
           <div class="event-date">
-            <div class="date-num">17</div>
-            <div class="date-month">Nis</div>
+            <div class="date-num">{{ event.dayLabel }}</div>
+            <div class="date-month">{{ event.monthLabel }}</div>
           </div>
-          
           <div class="event-details">
-            <h3 class="event-title">Temel Terminoloji Görevi Son Teslim</h3>
-            <p class="event-description">Dijital pazarlama terminolojisi görevinin teslim tarihi</p>
-            <div class="event-meta">
-              <span class="event-type task">Görev Teslimi</span>
-            </div>
+            <h3 class="event-title">{{ event.title }}</h3>
+            <p class="event-description">{{ event.description }}</p>
           </div>
-        </div>
-        
-        <div class="event-item">
-          <div class="event-date">
-            <div class="date-num">24</div>
-            <div class="date-month">Nis</div>
-          </div>
-          
-          <div class="event-details">
-            <h3 class="event-title">Marka Hedefleri Görevi Son Teslim</h3>
-            <p class="event-description">Dijital pazarlama hedefleri ve marka stratejisi görevinin teslim tarihi</p>
-            <div class="event-meta">
-              <span class="event-type task">Görev Teslimi</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="event-item">
-          <div class="event-date">
-            <div class="date-num">10</div>
-            <div class="date-month">Nis</div>
-          </div>
-          
-          <div class="event-details">
-            <h3 class="event-title">Dijital Pazarlama Webinarı</h3>
-            <p class="event-description">Sektör uzmanları ile canlı webinar</p>
-            <div class="event-meta">
-              <span class="event-type webinar">Webinar</span>
-              <span class="event-time">19:00 - 20:30</span>
-            </div>
-          </div>
-        </div>
+          <router-link :to="`/task/${event.taskId}`" class="btn btn-outline">Aç</router-link>
+        </article>
+      </div>
+
+      <div v-else class="empty-events">
+        <p>Yaklaşan teslim görünmüyor.</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { levels } from '@/utils/marketingData/levels';
+import { allTasks } from '@/utils/marketingData/learning-content';
+import { getTaskStatus, loadProgress, subscribeProgress } from '@/utils/progressStore';
+
+function parseTrDate(value) {
+  if (!value) return null;
+  const match = String(value).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const year = Number(match[3]);
+  const parsed = new Date(year, month, day);
+
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month ||
+    parsed.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsed;
+}
+
+function toDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date, amount) {
+  const next = new Date(date);
+  next.setDate(next.getDate() + amount);
+  return next;
+}
+
+function getStatusClass(status) {
+  if (status === 'Tamamlandı') return 'completed';
+  if (status === 'Devam Ediyor') return 'in-progress';
+  return 'not-started';
+}
+
 export default {
   name: 'CalendarView',
   data() {
+    const now = new Date();
     return {
-      // Calendar data could be added here for dynamic implementation
+      weekdays: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
+      levels,
+      tasks: allTasks,
+      progress: loadProgress(),
+      currentMonthStart: new Date(now.getFullYear(), now.getMonth(), 1),
+      selectedDateKey: toDateKey(now),
+      unsubscribeProgress: null
+    };
+  },
+  computed: {
+    monthLabel() {
+      return new Intl.DateTimeFormat('tr-TR', {
+        month: 'long',
+        year: 'numeric'
+      }).format(this.currentMonthStart);
+    },
+    selectedDateLabel() {
+      const selectedDate = this.getDateFromKey(this.selectedDateKey);
+      return new Intl.DateTimeFormat('tr-TR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        weekday: 'long'
+      }).format(selectedDate);
+    },
+    taskEvents() {
+      const levelMap = Object.fromEntries(this.levels.map((level) => [level.id, level]));
+      return this.tasks
+        .map((task) => {
+          const parsedDeadline = parseTrDate(task.deadline);
+          if (!parsedDeadline) return null;
+
+          const taskStatus = getTaskStatus(task.id, this.progress);
+          return {
+            id: `task-${task.id}`,
+            taskId: task.id,
+            title: task.title,
+            description: task.description,
+            date: parsedDeadline,
+            dateKey: toDateKey(parsedDeadline),
+            dayLabel: String(parsedDeadline.getDate()).padStart(2, '0'),
+            monthLabel: new Intl.DateTimeFormat('tr-TR', { month: 'short' }).format(parsedDeadline),
+            levelId: task.levelId,
+            levelTitle: levelMap[task.levelId]?.title || '',
+            status: taskStatus,
+            statusClass: getStatusClass(taskStatus)
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.date - b.date);
+    },
+    eventsByDate() {
+      return this.taskEvents.reduce((accumulator, event) => {
+        if (!accumulator[event.dateKey]) {
+          accumulator[event.dateKey] = [];
+        }
+        accumulator[event.dateKey].push(event);
+        return accumulator;
+      }, {});
+    },
+    calendarCells() {
+      const firstDayOfMonth = new Date(this.currentMonthStart);
+      const firstDayWeekIndex = (firstDayOfMonth.getDay() + 6) % 7;
+      const gridStartDate = addDays(firstDayOfMonth, -firstDayWeekIndex);
+      const todayKey = toDateKey(new Date());
+
+      return Array.from({ length: 42 }, (_, offset) => {
+        const date = addDays(gridStartDate, offset);
+        const dateKey = toDateKey(date);
+        return {
+          date,
+          dateKey,
+          dayNumber: date.getDate(),
+          isCurrentMonth: date.getMonth() === this.currentMonthStart.getMonth(),
+          isToday: dateKey === todayKey,
+          eventCount: (this.eventsByDate[dateKey] || []).length
+        };
+      });
+    },
+    selectedEvents() {
+      return this.eventsByDate[this.selectedDateKey] || [];
+    },
+    upcomingEvents() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return this.taskEvents
+        .filter((event) => event.date >= today)
+        .slice(0, 8);
+    }
+  },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.progress = progress;
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
     }
   },
   methods: {
-    // Calendar methods could be added here
+    getDateFromKey(dateKey) {
+      const [year, month, day] = String(dateKey).split('-').map(Number);
+      return new Date(year, (month || 1) - 1, day || 1);
+    },
+    selectDate(dateKey) {
+      this.selectedDateKey = dateKey;
+    },
+    goPreviousMonth() {
+      const year = this.currentMonthStart.getFullYear();
+      const month = this.currentMonthStart.getMonth();
+      this.currentMonthStart = new Date(year, month - 1, 1);
+    },
+    goNextMonth() {
+      const year = this.currentMonthStart.getFullYear();
+      const month = this.currentMonthStart.getMonth();
+      this.currentMonthStart = new Date(year, month + 1, 1);
+    },
+    goToToday() {
+      const now = new Date();
+      this.currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      this.selectedDateKey = toDateKey(now);
+    }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -168,7 +284,6 @@ h1 {
 
 .subtitle {
   color: #6c757d;
-  margin-bottom: 1.5rem;
 }
 
 .card {
@@ -183,7 +298,8 @@ h1 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
 }
 
 .calendar-nav {
@@ -193,183 +309,234 @@ h1 {
 }
 
 .current-month {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
   margin: 0;
+  text-transform: capitalize;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.95rem;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 1px solid #dee2e6;
+  background: #fff;
+  color: #212529;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #f8f9fa;
+}
+
+.btn-outline {
+  border-color: #ced4da;
 }
 
 .btn-icon {
   background: none;
-  border: none;
-  font-size: 1.25rem;
+  border: 1px solid #dee2e6;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  color: #212529;
 }
 
 .btn-icon:hover {
-  background-color: #f8f9fa;
-}
-
-.view-options {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.tab {
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-}
-
-.tab.active {
-  background-color: #212529;
-  color: white;
+  background: #f8f9fa;
 }
 
 .calendar-weekdays {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.25rem;
   text-align: center;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
 .weekday {
-  padding: 0.5rem;
-  font-size: 0.875rem;
+  padding: 0.45rem;
+  color: #495057;
 }
 
 .calendar-days {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.3rem;
 }
 
 .day {
-  height: 5rem;
-  border: 1px solid #dee2e6;
-  border-radius: 0.25rem;
-  padding: 0.5rem;
+  min-height: 4.8rem;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+  padding: 0.45rem;
+  cursor: pointer;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-.prev-month, .next-month {
+.day:hover {
+  border-color: #adb5bd;
+}
+
+.day-number {
+  font-weight: 600;
+}
+
+.prev-month {
+  background: #f8f9fa;
   color: #adb5bd;
-  background-color: #f8f9fa;
 }
 
 .has-events {
-  font-weight: 600;
+  border-color: #ced4da;
+}
+
+.is-today {
+  box-shadow: inset 0 0 0 2px #0d6efd;
+}
+
+.is-selected {
+  background: #eef5ff;
+  border-color: #0d6efd;
 }
 
 .day-indicator {
   position: absolute;
-  bottom: 0.5rem;
-  background-color: #0d6efd;
-  color: white;
-  width: 1.25rem;
-  height: 1.25rem;
-  display: flex;
+  bottom: 0.45rem;
+  right: 0.45rem;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: #0d6efd;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  font-size: 0.75rem;
-}
-
-.upcoming-events {
-  margin-top: 1.5rem;
 }
 
 .card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.2rem;
   margin-bottom: 1rem;
 }
 
 .event-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.9rem;
 }
 
 .event-item {
-  display: flex;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #dee2e6;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.9rem;
+  align-items: center;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.85rem;
 }
 
-.event-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+.event-item.compact {
+  grid-template-columns: auto 1fr auto;
 }
 
 .event-date {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-width: 3.5rem;
-  height: 3.5rem;
-  background-color: #f8f9fa;
-  border-radius: 0.25rem;
+  min-width: 3.2rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  text-align: center;
+  padding: 0.35rem;
 }
 
 .date-num {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .date-month {
   font-size: 0.75rem;
   color: #6c757d;
-}
-
-.event-details {
-  flex: 1;
+  text-transform: uppercase;
 }
 
 .event-title {
   font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .event-description {
+  font-size: 0.9rem;
   color: #6c757d;
-  font-size: 0.875rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.45rem;
 }
 
 .event-meta {
   display: flex;
-  gap: 1rem;
-  font-size: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-size: 0.8rem;
 }
 
 .event-type {
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-weight: 500;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #e9ecef;
 }
 
 .event-type.task {
-  background-color: #cff4fc;
-  color: #055160;
+  background: #e6f4ea;
+  color: #256b3a;
 }
 
-.event-type.webinar {
-  background-color: #e2e3e5;
-  color: #41464b;
+.event-level {
+  color: #495057;
 }
 
-.event-time {
+.event-status {
+  font-weight: 600;
+}
+
+.event-status.completed {
+  color: #198754;
+}
+
+.event-status.in-progress {
+  color: #b58100;
+}
+
+.event-status.not-started {
   color: #6c757d;
 }
-</style> 
+
+.empty-events {
+  border: 1px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #6c757d;
+}
+
+@media (max-width: 768px) {
+  .calendar-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .calendar-nav {
+    justify-content: space-between;
+  }
+
+  .event-item,
+  .event-item.compact {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+}
+</style>

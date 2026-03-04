@@ -220,7 +220,7 @@ body {
   background-color: #f1f3f5;
 }
 
-.nav-item.router-link-active {
+.nav-item.router-link-exact-active {
   background-color: #e9ecef;
   font-weight: 500;
 }
