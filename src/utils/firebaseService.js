@@ -35,6 +35,21 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
+const LOCAL_FALLBACK_USER_KEY = 'fallbackUserId';
+
+function getLocalFallbackUserId() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return `local-${Date.now()}`;
+  }
+
+  const existing = window.localStorage.getItem(LOCAL_FALLBACK_USER_KEY);
+  if (existing) return existing;
+
+  const generated = `local-${Math.random().toString(36).slice(2, 11)}`;
+  window.localStorage.setItem(LOCAL_FALLBACK_USER_KEY, generated);
+  return generated;
+}
+
 // Create or get user session
 const initUserSession = async () => {
   try {
@@ -66,8 +81,13 @@ const initUserSession = async () => {
     
     return user.uid;
   } catch (error) {
-    console.error('Error initializing user session:', error);
-    return null;
+    const errorCode = String(error?.code || '');
+    if (errorCode.includes('admin-restricted-operation') || errorCode.includes('operation-not-allowed')) {
+      return getLocalFallbackUserId();
+    }
+
+    console.warn('Firebase session failed, local fallback enabled:', errorCode);
+    return getLocalFallbackUserId();
   }
 };
 

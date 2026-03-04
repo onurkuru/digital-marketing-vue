@@ -9,7 +9,7 @@
         </div>
       </div>
       
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav primary-nav">
         <router-link to="/" class="nav-item">
           <span class="icon">🏠</span>
           <span>Ana Sayfa</span>
@@ -38,7 +38,7 @@
       
       <div class="sidebar-section">
         <h3>Seviyeler</h3>
-        <nav class="sidebar-nav">
+        <nav class="sidebar-nav levels-nav">
           <router-link 
             v-for="level in visibleLevels" 
             :key="level.id" 
@@ -53,7 +53,7 @@
       
       <div class="sidebar-section">
         <h3>Kaynaklar</h3>
-        <nav class="sidebar-nav">
+        <nav class="sidebar-nav resources-nav">
           <router-link to="/documents" class="nav-item">
             <span class="icon">📄</span>
             <span>Dökümanlar</span>
@@ -389,5 +389,71 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 1024px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.75rem 0;
+  }
+
+  .sidebar-header {
+    padding: 0 0.9rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .sidebar-section {
+    padding: 0 0.9rem;
+    margin-top: 0.9rem;
+  }
+
+  .primary-nav,
+  .resources-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+    padding: 0 0.9rem;
+  }
+
+  .levels-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .nav-item {
+    padding: 0.55rem 0.65rem;
+    min-width: 0;
+  }
+
+  .main-content {
+    max-width: 100%;
+    padding: 1rem;
+    min-height: auto;
+  }
+
+  .content-shell {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .primary-nav,
+  .resources-nav,
+  .levels-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-logo {
+    font-size: 1rem;
+  }
 }
 </style> 

@@ -47,6 +47,7 @@ Netlify > Site configuration > Environment variables alanına aşağıdaki anaht
 
 - `VITE_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` (Cloudflare Turnstile) **veya**
 - `VITE_RECAPTCHA_SITE_KEY` + `SITE_RECAPTCHA_SECRET` (Google reCAPTCHA)
+  alternatif: `SITE_RECAPTCHA_KEY` + `SITE_RECAPTCHA_SECRET` (runtime config fallback)
 - `NETLIFY_EMAILS_SECRET` (Netlify Email Integration secret)
 - `SUBMISSION_FROM_EMAIL` (mail gönderen adres)
 - `SUBMISSION_TO_EMAIL` (teslimlerin düşeceği gizli hedef adres)

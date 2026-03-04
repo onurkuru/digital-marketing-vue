@@ -258,6 +258,10 @@ export default {
         attachments: [],
         website: ''
       },
+      runtimeCaptchaConfig: {
+        provider: '',
+        siteKey: ''
+      },
       captchaToken: '',
       captchaError: '',
       captchaWidgetId: null,
@@ -289,14 +293,18 @@ export default {
     captchaProvider() {
       if (import.meta.env.VITE_TURNSTILE_SITE_KEY) return 'turnstile';
       if (import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_SITE_RECAPTCHA_KEY) return 'recaptcha';
+      if (this.runtimeCaptchaConfig.provider) return this.runtimeCaptchaConfig.provider;
       return '';
     },
     captchaSiteKey() {
       if (this.captchaProvider === 'turnstile') {
-        return import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+        return import.meta.env.VITE_TURNSTILE_SITE_KEY || this.runtimeCaptchaConfig.siteKey || '';
       }
       if (this.captchaProvider === 'recaptcha') {
-        return import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_SITE_RECAPTCHA_KEY || '';
+        return import.meta.env.VITE_RECAPTCHA_SITE_KEY
+          || import.meta.env.VITE_SITE_RECAPTCHA_KEY
+          || this.runtimeCaptchaConfig.siteKey
+          || '';
       }
       return '';
     },
@@ -315,16 +323,14 @@ export default {
   },
   watch: {
     id() {
-      this.resetSubmissionForm();
-      this.renderCaptcha();
+      this.initializeForm();
     }
   },
   mounted() {
     this.unsubscribeProgress = subscribeProgress((progress) => {
       this.progress = progress;
     });
-    this.resetSubmissionForm();
-    this.renderCaptcha();
+    this.initializeForm();
   },
   beforeUnmount() {
     if (typeof this.unsubscribeProgress === 'function') {
@@ -333,6 +339,36 @@ export default {
     this.resetCaptchaWidget();
   },
   methods: {
+    async initializeForm() {
+      this.resetSubmissionForm();
+      await this.loadRuntimeCaptchaConfig();
+      this.renderCaptcha();
+    },
+    async loadRuntimeCaptchaConfig() {
+      if (import.meta.env.VITE_TURNSTILE_SITE_KEY || import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_SITE_RECAPTCHA_KEY) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/runtime-config', {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const provider = String(data?.captcha?.provider || '').trim().toLowerCase();
+        const siteKey = String(data?.captcha?.siteKey || '').trim();
+        if (!provider || !siteKey) return;
+
+        if (provider === 'turnstile' || provider === 'recaptcha') {
+          this.runtimeCaptchaConfig = { provider, siteKey };
+        }
+      } catch (error) {
+        // no-op
+      }
+    },
     getLevelTitle(levelId) {
       const level = this.levels.find((item) => item.id === String(levelId));
       return level ? `Seviye ${level.id}: ${level.title}` : 'Seviye';
