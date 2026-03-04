@@ -2,7 +2,7 @@
   <div class="tasks-view">
     <div class="page-header">
       <h1>Görevler</h1>
-      <p class="subtitle">Tüm seviyelerden görevleri seçip istediğiniz sırayla başlayabilirsiniz.</p>
+      <p class="subtitle">Görevleri seviye sırasına göre tamamlayın. İlerlemeniz otomatik kaydedilir.</p>
     </div>
 
     <div class="tasks-filters">
@@ -74,7 +74,8 @@
           </div>
 
           <div class="task-actions">
-            <router-link :to="`/task/${task.id}`" class="btn btn-primary">Göreve Git</router-link>
+            <router-link v-if="task.isUnlocked" :to="`/task/${task.id}`" class="btn btn-primary">Göreve Git</router-link>
+            <button v-else class="btn btn-disabled" disabled>Kilitli Seviye</button>
           </div>
         </div>
       </div>
@@ -85,6 +86,7 @@
 <script>
 import { levels } from '@/utils/marketingData/levels';
 import { allTasks } from '@/utils/marketingData/learning-content';
+import { getTaskStatus, isLevelUnlocked, loadProgress, subscribeProgress } from '@/utils/progressStore';
 
 export default {
   name: 'TasksView',
@@ -99,12 +101,21 @@ export default {
       currentTab: 'all',
       levelFilter: 'all',
       levels,
-      tasks: allTasks
+      tasks: allTasks,
+      progress: loadProgress(),
+      unsubscribeProgress: null
     };
   },
   computed: {
+    tasksWithStatus() {
+      return this.tasks.map((task) => ({
+        ...task,
+        status: getTaskStatus(task.id, this.progress),
+        isUnlocked: isLevelUnlocked(task.levelId, this.progress)
+      }));
+    },
     filteredTasks() {
-      return this.tasks.filter((task) => {
+      return this.tasksWithStatus.filter((task) => {
         if (this.currentTab === 'in-progress' && task.status !== 'Devam Ediyor') return false;
         if (this.currentTab === 'completed' && task.status !== 'Tamamlandı') return false;
         if (this.currentTab === 'not-started' && task.status !== 'Henüz Başlanmadı') return false;
@@ -113,6 +124,16 @@ export default {
 
         return true;
       });
+    }
+  },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.progress = progress;
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
     }
   },
   methods: {
@@ -343,6 +364,13 @@ h1 {
 
 .btn-primary:hover {
   background-color: #000;
+}
+
+.btn-disabled {
+  background: #f1f3f5;
+  border: 1px solid #ced4da;
+  color: #6c757d;
+  cursor: not-allowed;
 }
 
 @media (max-width: 900px) {

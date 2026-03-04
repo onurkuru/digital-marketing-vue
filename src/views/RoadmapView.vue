@@ -112,16 +112,33 @@
 
 <script>
 import { roadmapStages, roadmapModules } from '@/utils/marketingData/learning-content';
+import { getTaskStatus, isLevelUnlocked, loadProgress, markTaskStarted, subscribeProgress } from '@/utils/progressStore';
 
 export default {
   name: 'RoadmapView',
   data() {
     return {
       stages: roadmapStages,
-      modules: roadmapModules.map((module) => ({ ...module }))
+      baseModules: roadmapModules.map((module) => ({ ...module })),
+      progress: loadProgress(),
+      unsubscribeProgress: null
     }
   },
   computed: {
+    modules() {
+      return this.baseModules.map((module) => {
+        const taskId = module.id.split('-')[1];
+        const unlocked = isLevelUnlocked(module.levelId, this.progress);
+        const status = unlocked ? this.normalizeTaskStatus(getTaskStatus(taskId, this.progress)) : 'locked';
+        const completedAt = status === 'completed' ? this.progress.updatedAt : module.completedAt;
+        return {
+          ...module,
+          status,
+          completedAt,
+          lockReason: unlocked ? '' : `Önce seviye ${Number(module.levelId) - 1} tamamlanmalı.`
+        };
+      });
+    },
     completedModules() {
       return this.modules.filter(m => m.status === 'completed').length;
     },
@@ -129,10 +146,26 @@ export default {
       return this.modules.length;
     },
     progressPercentage() {
+      if (!this.totalModules) return 0;
       return (this.completedModules / this.totalModules) * 100;
     }
   },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.progress = progress;
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
+    }
+  },
   methods: {
+    normalizeTaskStatus(status) {
+      if (status === 'Tamamlandı') return 'completed';
+      if (status === 'Devam Ediyor') return 'in-progress';
+      return 'not-started';
+    },
     getModulesByStage(stageId) {
       return this.modules.filter(module => module.stageId === stageId);
     },
@@ -224,12 +257,8 @@ export default {
       this.$router.push({ name: 'level', params: { id: levelId }});
     },
     startModule(moduleId) {
-      // Update the module status
-      const moduleIndex = this.modules.findIndex(m => m.id === moduleId);
-      if (moduleIndex !== -1 && this.modules[moduleIndex].status === 'not-started') {
-        this.modules[moduleIndex].status = 'in-progress';
-        // In a real app, you would save this status change to the database
-      }
+      const taskId = moduleId.split('-')[1];
+      markTaskStarted(taskId);
       
       // Extract the level ID from the module ID
       const levelId = moduleId.split('-')[1].charAt(0);

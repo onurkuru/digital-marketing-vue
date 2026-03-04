@@ -1,5 +1,5 @@
 <template>
-  <div class="task-detail-view" v-if="task">
+  <div class="task-detail-view" v-if="task && isUnlocked">
     <div class="page-header">
       <div class="breadcrumbs">
         <router-link to="/">Ana Sayfa</router-link>
@@ -59,6 +59,14 @@
     <div class="task-submission card">
       <h2>Görev Teslimi</h2>
 
+      <div class="email-delivery">
+        <h3>E-posta ile Teslim</h3>
+        <p>
+          Görevi tamamladıktan sonra yöneticinize e-posta gönderin. Konu ve içerik otomatik hazırlanır.
+        </p>
+        <a :href="submissionEmailLink" class="btn btn-outline">Yöneticiye E-posta Gönder</a>
+      </div>
+
       <div v-if="task.status === 'Tamamlandı'" class="submission-complete">
         <div class="success-icon">✓</div>
         <div class="success-message">
@@ -86,6 +94,12 @@
     </div>
   </div>
 
+  <div v-else-if="task && !isUnlocked" class="card">
+    <h2>Bu Görev Henüz Kilitli</h2>
+    <p>Önceki seviyedeki görevleri ve quizi tamamladıktan sonra bu göreve erişebilirsiniz.</p>
+    <router-link :to="`/level/${Math.max(1, Number(task.levelId) - 1)}`" class="btn btn-primary">Önceki Seviyeye Dön</router-link>
+  </div>
+
   <div v-else class="card">
     <h2>Görev bulunamadı</h2>
     <p>Geçerli bir görev seçerek tekrar deneyin.</p>
@@ -95,6 +109,7 @@
 <script>
 import { levels } from '@/utils/marketingData/levels';
 import { allTasks } from '@/utils/marketingData/learning-content';
+import { getTaskStatus, isLevelUnlocked, loadProgress, markTaskCompleted, markTaskStarted, subscribeProgress } from '@/utils/progressStore';
 
 export default {
   name: 'TaskDetailView',
@@ -108,17 +123,58 @@ export default {
     return {
       submissionNotes: '',
       completedAt: null,
-      tasks: JSON.parse(JSON.stringify(allTasks)),
-      levels
+      levels,
+      tasks: allTasks,
+      progress: loadProgress(),
+      unsubscribeProgress: null,
+      managerEmail: import.meta.env.VITE_MANAGER_EMAIL || 'yonetici@example.com'
     };
   },
   computed: {
     task() {
-      return this.tasks.find((item) => item.id === this.id) || null;
+      const baseTask = this.tasks.find((item) => item.id === this.id);
+      if (!baseTask) return null;
+      return {
+        ...baseTask,
+        status: getTaskStatus(baseTask.id, this.progress)
+      };
+    },
+    isUnlocked() {
+      if (!this.task) return false;
+      return isLevelUnlocked(this.task.levelId, this.progress);
     },
     completedDateText() {
       if (!this.completedAt) return 'Bugün';
       return this.completedAt;
+    },
+    submissionEmailLink() {
+      if (!this.task) return '#';
+      const subject = `Görev Teslimi - ${this.task.title}`;
+      const body = [
+        `Merhaba,`,
+        ``,
+        `${this.task.title} görevini tamamladım.`,
+        ``,
+        `Notlar:`,
+        `${this.submissionNotes || 'Not eklenmedi.'}`,
+        ``,
+        `Görev ID: ${this.task.id}`,
+        `Seviye: ${this.task.levelId}`,
+        ``,
+        `Teşekkürler.`
+      ].join('\n');
+
+      return `mailto:${this.managerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+  },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.progress = progress;
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
     }
   },
   methods: {
@@ -150,18 +206,12 @@ export default {
     },
     saveProgress() {
       if (!this.task) return;
-      const taskIndex = this.tasks.findIndex((item) => item.id === this.id);
-      if (taskIndex !== -1 && this.tasks[taskIndex].status === 'Henüz Başlanmadı') {
-        this.tasks[taskIndex].status = 'Devam Ediyor';
-      }
+      markTaskStarted(this.id);
       alert('İlerlemeniz kaydedildi!');
     },
     completeTask() {
       if (!this.task) return;
-      const taskIndex = this.tasks.findIndex((item) => item.id === this.id);
-      if (taskIndex !== -1) {
-        this.tasks[taskIndex].status = 'Tamamlandı';
-      }
+      markTaskCompleted(this.id);
       this.completedAt = new Date().toLocaleDateString('tr-TR');
       alert('Tebrikler! Görev tamamlandı.');
       this.$router.push(`/level/${this.task.levelId}`);
@@ -354,6 +404,23 @@ h3 {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.email-delivery {
+  padding: 1rem;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.email-delivery h3 {
+  margin-bottom: 0.5rem;
+}
+
+.email-delivery p {
+  color: #6c757d;
+  margin-bottom: 0.75rem;
 }
 
 .success-icon {

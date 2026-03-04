@@ -13,6 +13,13 @@
       <p class="subtitle">{{ level.description }}</p>
     </div>
 
+    <div v-if="!isUnlocked" class="card locked-level">
+      <h2>Bu Seviye Henüz Kilitli</h2>
+      <p>Seviye {{ Number(level.id) - 1 }} görevlerini tamamlayıp quizden en az %70 alarak bu seviyeyi açabilirsiniz.</p>
+      <router-link :to="`/level/${Math.max(1, Number(level.id) - 1)}`" class="btn btn-primary">Önceki Seviyeye Dön</router-link>
+    </div>
+
+    <template v-else>
     <div class="level-progress card">
       <div class="progress-info">
         <div class="progress-stats">
@@ -44,6 +51,7 @@
         <div v-for="section in sections" :key="section.title" class="content-section">
           <h3>{{ section.title }}</h3>
           <p>{{ section.text }}</p>
+          <p v-for="detail in section.details || []" :key="`${section.title}-${detail}`">{{ detail }}</p>
 
           <ul v-if="section.bullets && section.bullets.length">
             <li v-for="bullet in section.bullets" :key="bullet">{{ bullet }}</li>
@@ -56,10 +64,7 @@
       </div>
 
       <div class="content-actions">
-        <router-link v-if="level.id === '5'" to="/email-marketing-quizzes" class="btn btn-primary">
-          E-posta Quizlerine Git
-        </router-link>
-        <router-link v-else :to="`/quiz/${level.id}`" class="btn btn-primary">
+        <router-link :to="`/quiz/${level.id}`" class="btn btn-primary">
           Quiz'e Başla
         </router-link>
       </div>
@@ -97,12 +102,14 @@
         <p>Bu seviyeye ait görev bulunamadı.</p>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script>
 import { levels } from '@/utils/marketingData/levels';
 import { tasksByLevel, levelContentSections } from '@/utils/marketingData/learning-content';
+import { getTaskStatus, isLevelUnlocked, loadProgress, subscribeProgress } from '@/utils/progressStore';
 
 export default {
   name: 'LevelView',
@@ -112,31 +119,60 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      progress: loadProgress(),
+      unsubscribeProgress: null
+    };
+  },
   computed: {
     level() {
       return levels.find((item) => item.id === this.id) || levels[0];
+    },
+    isUnlocked() {
+      return isLevelUnlocked(this.level.id, this.progress);
     },
     sections() {
       return levelContentSections[this.level.id] || [];
     },
     tasksInLevel() {
-      return tasksByLevel[this.level.id] || [];
+      const levelTasks = tasksByLevel[this.level.id] || [];
+      return levelTasks.map((task) => ({
+        ...task,
+        status: getTaskStatus(task.id, this.progress)
+      }));
     },
     completedSections() {
+      if (!this.sections.length) return 0;
+      if ((this.quizScore || 0) >= 70) return this.sections.length;
+      if (this.completedTasks > 0) return 1;
       return 0;
     },
     completedTasks() {
       return this.tasksInLevel.filter((task) => task.status === 'Tamamlandı').length;
     },
     quizScore() {
-      return null;
+      return Number(this.progress.quizResults?.[this.level.id] || 0) || null;
     },
     levelProgress() {
-      if (!this.tasksInLevel.length) {
+      if (!this.tasksInLevel.length || !this.isUnlocked) {
         return 0;
       }
+      const contentProgress = this.sections.length ? this.completedSections / this.sections.length : 0;
       const taskProgress = this.completedTasks / this.tasksInLevel.length;
-      return Math.round(taskProgress * 100);
+      const quizProgress = this.quizScore ? this.quizScore / 100 : 0;
+      const total = (contentProgress * 0.3) + (taskProgress * 0.5) + (quizProgress * 0.2);
+      return Math.round(total * 100);
+    }
+  },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.progress = progress;
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
     }
   }
 };
@@ -241,6 +277,15 @@ h1 {
 
 .level-content {
   margin-bottom: 1.5rem;
+}
+
+.locked-level h2 {
+  margin-bottom: 0.75rem;
+}
+
+.locked-level p {
+  color: #6c757d;
+  margin-bottom: 1rem;
 }
 
 .content-sections {

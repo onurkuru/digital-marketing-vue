@@ -640,13 +640,34 @@ function normalizeResourceType(type) {
   return map[type] || type || 'resource';
 }
 
+function buildSearchUrl(query) {
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+function resolveResourceUrl(rawUrl, title, type) {
+  const url = String(rawUrl || '').trim();
+
+  if (url && /^https?:\/\//.test(url) && !url.includes('example')) {
+    return url;
+  }
+
+  const safeTitle = title || 'digital marketing resource';
+  const safeType = type || 'resource';
+
+  if (safeType === 'video') {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(safeTitle)}`;
+  }
+
+  return buildSearchUrl(`${safeTitle} ${safeType}`);
+}
+
 function normalizeResources(resources) {
   if (Array.isArray(resources)) {
     return resources.map((resource, index) => ({
       type: resource.type || 'resource',
       title: resource.title || `Kaynak ${index + 1}`,
       description: resource.description || '',
-      url: resource.url || '#'
+      url: resolveResourceUrl(resource.url, resource.title, resource.type || 'resource')
     }));
   }
 
@@ -659,7 +680,7 @@ function normalizeResources(resources) {
             type: normalizeResourceType(type),
             title,
             description: '',
-            url: '#'
+            url: resolveResourceUrl('', title, normalizeResourceType(type))
           });
         });
       }
@@ -909,7 +930,18 @@ export const levelContentSections = {
   ]
 };
 
-export const levelQuizzes = [
+Object.values(levelContentSections).forEach((sections) => {
+  sections.forEach((section) => {
+    if (!Array.isArray(section.details)) {
+      section.details = [
+        `${section.title} bölümünü tamamladıktan sonra seviyeye özel görevlerle pratik yapın.`,
+        'Teorik bilgiyi ölçümleme ve uygulama adımlarıyla pekiştirin.'
+      ];
+    }
+  });
+});
+
+const baseLevelQuizzes = [
   {
     id: 'lq1',
     levelId: '1',
@@ -1223,6 +1255,117 @@ export const levelQuizzes = [
     ]
   }
 ];
+
+const deepDiveQuestionTemplates = [
+  {
+    question: (quiz) => `${quiz.levelTitle} kapsamında strateji belirlerken ilk kontrol edilmesi gereken nedir?`,
+    options: ['Sadece tasarım tercihleri', 'İş hedefi ve KPI uyumu', 'Sadece rakip renk paleti', 'Sadece haftalık paylaşım sayısı'],
+    correctOption: 1,
+    explanation: 'Stratejinin etkili olabilmesi için hedef ve KPI uyumu temel şarttır.'
+  },
+  {
+    question: () => 'A/B testinde güvenilir sonuç için hangi yaklaşım doğrudur?',
+    options: ['Tek bir günde karar vermek', 'Yeterli örneklem ve net başarı metriği kullanmak', 'Sadece en ucuz seçeneği almak', 'Sadece ekip yorumuna bakmak'],
+    correctOption: 1,
+    explanation: 'A/B testinin güvenilirliği örneklem büyüklüğü ve net metrik tanımına bağlıdır.'
+  },
+  {
+    question: () => 'Dönüşüm hunisi analizinde darboğaz neyi ifade eder?',
+    options: ['Tüm metriklerin yükselmesi', 'Belirli adımda yüksek kayıp yaşanması', 'Ekip toplantılarının artması', 'Sadece içerik sayısının artması'],
+    correctOption: 1,
+    explanation: 'Darboğaz, kullanıcıların belirli bir adımda yoğun şekilde kaybedildiği noktadır.'
+  },
+  {
+    question: () => 'Aşağıdakilerden hangisi veri odaklı karar örneğidir?',
+    options: ['Sezgisel kanal seçimi', 'KPI trendine göre bütçe kaydırımı', 'Rastgele kreatif değişikliği', 'Sadece önceki yıl planını kopyalama'],
+    correctOption: 1,
+    explanation: 'Veri odaklı kararlar ölçüm sonuçlarına dayanır.'
+  },
+  {
+    question: () => 'Segmentasyonun temel amacı nedir?',
+    options: ['Tüm kullanıcılara aynı mesajı göstermek', 'Benzer özellikte kitlelere uygun mesaj iletmek', 'Yalnızca kampanya adını değiştirmek', 'Sadece teknik rapor üretmek'],
+    correctOption: 1,
+    explanation: 'Segmentasyon, doğru kişiye doğru mesajı ulaştırmayı sağlar.'
+  },
+  {
+    question: () => 'Performans raporlarında hangi yaklaşım daha sağlıklıdır?',
+    options: ['Tek metrik üzerinden karar', 'Ana ve yardımcı KPI seti ile değerlendirme', 'Sadece yorum bazlı rapor', 'Sadece görsel sayısı artırma'],
+    correctOption: 1,
+    explanation: 'Tek metrik yanıltabilir; KPI seti birlikte okunmalıdır.'
+  },
+  {
+    question: () => 'Kanal seçiminde en kritik kriterlerden biri hangisidir?',
+    options: ['Trend olduğu için seçmek', 'Hedef kitlenin kanal davranışı', 'Sadece düşük maliyet', 'Sadece ekip alışkanlığı'],
+    correctOption: 1,
+    explanation: 'Kanal seçimi hedef kitlenin davranışına göre yapılmalıdır.'
+  },
+  {
+    question: () => 'Kampanya sonrası ilk aksiyon ne olmalıdır?',
+    options: ['Hiç değerlendirme yapmamak', 'Sonuçları metrik bazında analiz etmek', 'Sadece bütçeyi artırmak', 'Tüm kanalları kapatmak'],
+    correctOption: 1,
+    explanation: 'Analiz olmadan iyileştirme yapılamaz.'
+  },
+  {
+    question: () => 'Kaliteli içerik için hangi ifade doğrudur?',
+    options: ['Sadece uzun olması yeterlidir', 'Kullanıcı niyetine ve probleme çözüm sunmalıdır', 'Sadece görsel yoğun olmalıdır', 'Sadece marka ismi tekrar etmelidir'],
+    correctOption: 1,
+    explanation: 'Kaliteli içerik kullanıcının ihtiyacına çözüm üretir.'
+  },
+  {
+    question: () => 'Optimizasyon döngüsü hangi sırayla ilerlemelidir?',
+    options: ['Uygula > Ölç > Hipotez kur', 'Ölç > Hipotez kur > Test et > Uygula', 'Sadece uygula', 'Sadece raporla'],
+    correctOption: 1,
+    explanation: 'Ölçüm ve hipotez tabanlı test yaklaşımı sürdürülebilir optimizasyon sağlar.'
+  },
+  {
+    question: () => 'KPI hedefi belirlerken hangisi önemlidir?',
+    options: ['Belirsiz hedefler', 'Zaman ve değer içeren ölçülebilir hedefler', 'Sadece rakibi kopyalama', 'Sadece ekip isteği'],
+    correctOption: 1,
+    explanation: 'Ölçülebilir, zaman bağlı KPI hedefleri takip edilebilirliği artırır.'
+  },
+  {
+    question: () => 'Kreatif performansını iyileştirmek için ilk test alanı hangisi olabilir?',
+    options: ['Sunucu markası', 'Başlık/mesaj varyasyonları', 'Dosya uzantısı', 'Ekip oturma düzeni'],
+    correctOption: 1,
+    explanation: 'Mesaj ve başlık değişkenleri performansı doğrudan etkiler.'
+  },
+  {
+    question: () => 'Raporlama sıklığı nasıl belirlenmelidir?',
+    options: ['Rastgele', 'Kanal hızı ve karar periyoduna göre', 'Yılda bir', 'Sadece problem olduğunda'],
+    correctOption: 1,
+    explanation: 'Raporlama ritmi karar alma temposuna uygun olmalıdır.'
+  },
+  {
+    question: () => 'Başarılı kampanya sonrası en doğru yaklaşım hangisidir?',
+    options: ['Öğrenimi dokümante etmeden geçmek', 'Öğrenimi standardize edip ölçeklemek', 'Sadece bütçe kesmek', 'Tüm testleri durdurmak'],
+    correctOption: 1,
+    explanation: 'Başarılı öğrenimlerin dokümantasyonu ölçeklenebilir başarı sağlar.'
+  },
+  {
+    question: () => 'Kullanıcı yolculuğu analizi ne sağlar?',
+    options: ['Sadece sosyal takipçi artışı', 'Temas noktalarını iyileştirerek dönüşüm fırsatı bulma', 'Sadece logo yenileme', 'Sadece e-posta arşivleme'],
+    correctOption: 1,
+    explanation: 'Yolculuk analizi kritik temas noktalarında iyileştirme alanlarını gösterir.'
+  }
+];
+
+function buildExtendedQuestions(quiz) {
+  const baseQuestions = quiz.questions || [];
+  const deepDiveQuestions = deepDiveQuestionTemplates.map((template, index) => ({
+    question: template.question(quiz),
+    options: template.options,
+    correctOption: template.correctOption,
+    explanation: template.explanation,
+    id: `${quiz.id}-extra-${index + 1}`
+  }));
+
+  return [...baseQuestions, ...deepDiveQuestions].slice(0, 20);
+}
+
+export const levelQuizzes = baseLevelQuizzes.map((quiz) => ({
+  ...quiz,
+  questions: buildExtendedQuestions(quiz)
+}));
 
 export const roadmapStages = levels.map((level) => ({
   id: `stage-${level.id}`,

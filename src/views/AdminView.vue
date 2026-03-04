@@ -753,6 +753,7 @@ export default {
         localStorage.removeItem('completedTasks');
         localStorage.removeItem('completedQuizzes');
         localStorage.removeItem('achievements');
+        localStorage.removeItem('digital_marketing_learning_progress_v1');
         
         alert('Sistem başarıyla sıfırlandı!');
         this.showResetConfirmation = false;

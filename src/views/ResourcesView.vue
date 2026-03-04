@@ -169,7 +169,7 @@ export default {
           status: 'graded',
           score: 92,
           feedback: 'Çok iyi bir çalışma! Terimler detaylı bir şekilde açıklanmış ve güzel örneklerle desteklenmiş. SEO bölümü özellikle başarılı olmuş.',
-          fileUrl: '#'
+          fileUrl: 'https://www.google.com/search?q=dijital+pazarlama+terimleri+sozlugu'
         },
         {
           id: 'assignment-102',
@@ -180,7 +180,7 @@ export default {
           status: 'graded',
           score: 85,
           feedback: 'İyi bir analiz çalışması. Kanallar arasındaki farklar net bir şekilde ortaya konmuş. Maliyet analizinin biraz daha detaylandırılması faydalı olabilirdi.',
-          fileUrl: '#'
+          fileUrl: 'https://www.google.com/search?q=dijital+pazarlama+kanallari+analizi'
         },
         {
           id: 'assignment-103',
@@ -189,7 +189,7 @@ export default {
           description: 'XYZ markası için hazırladığım kapsamlı dijital pazarlama stratejisi ve hedef kitle analizi.',
           submittedDate: '2023-08-22',
           status: 'pending',
-          fileUrl: '#'
+          fileUrl: 'https://www.google.com/search?q=dijital+pazarlama+stratejisi+ornek'
         }
       ],
       
@@ -202,7 +202,7 @@ export default {
           description: 'Bir e-ticaret sitesi için hazırladığım 3 aylık dijital pazarlama kampanya planı.',
           createdDate: '2023-08-18',
           tags: ['Strateji', 'E-ticaret', 'Kampanya'],
-          fileUrl: '#'
+          fileUrl: 'https://www.google.com/search?q=dijital+pazarlama+kampanya+plani'
         },
         {
           id: 'project-102',
@@ -212,7 +212,7 @@ export default {
           description: 'Instagram reklamları için hazırladığım strateji ve başarı ölçümleri sunumu.',
           createdDate: '2023-08-20',
           tags: ['Sosyal Medya', 'Instagram', 'Reklam'],
-          fileUrl: '#'
+          fileUrl: 'https://www.google.com/search?q=instagram+reklam+stratejisi+sunumu'
         }
       ],
       
@@ -222,7 +222,7 @@ export default {
           title: 'Dijital Pazarlama Temelleri Sertifikası',
           issuedDate: '2023-08-17',
           completionRate: 100,
-          fileUrl: '#'
+          fileUrl: 'https://www.google.com/search?q=dijital+pazarlama+temelleri+sertifikasi'
         }
       ]
     }

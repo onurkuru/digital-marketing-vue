@@ -4,7 +4,7 @@
       <div class="hero-content">
         <h1>Dijital Pazarlama Öğrenme Yolculuğu</h1>
         <p class="subtitle">
-          Tüm eğitimler ve görevler aktif. Sıfırdan başlayıp istediğin seviyeden ilerleyebilirsin.
+          Seviye seviye ilerleyen eğitim akışı aktif. İlerlemen otomatik olarak tarayıcı önbelleğine kaydedilir.
         </p>
         <router-link to="/tasks" class="btn btn-primary">
           <span class="btn-icon">🚀</span>
@@ -27,10 +27,10 @@
               cy="60"
               r="50"
               stroke-dasharray="314.16"
-              :stroke-dashoffset="314.16"
+              :stroke-dashoffset="314.16 - (314.16 * progressPercentage) / 100"
             ></circle>
           </svg>
-          <div class="progress-text">0%</div>
+          <div class="progress-text">{{ progressPercentage }}%</div>
         </div>
         <div class="progress-label">Toplam İlerleme</div>
       </div>
@@ -39,7 +39,7 @@
         <div class="stats-card">
           <div class="stats-icon">🏆</div>
           <div class="stats-content">
-            <div class="stats-value">0/{{ totalTasks }}</div>
+            <div class="stats-value">{{ completedTaskCount }}/{{ totalTasks }}</div>
             <div class="stats-title">Tamamlanan Görevler</div>
           </div>
         </div>
@@ -47,7 +47,7 @@
         <div class="stats-card">
           <div class="stats-icon">📚</div>
           <div class="stats-content">
-            <div class="stats-value">{{ levels.length }} Seviye Açık</div>
+            <div class="stats-value">{{ unlockedLevel }} / {{ levels.length }} Seviye Açık</div>
             <div class="stats-title">Mevcut Erişim</div>
           </div>
         </div>
@@ -55,7 +55,7 @@
         <div class="stats-card">
           <div class="stats-icon">📝</div>
           <div class="stats-content">
-            <div class="stats-value">Serbest Başlangıç</div>
+            <div class="stats-value">Adımlı İlerleme</div>
             <div class="stats-title">İlerleme Modu</div>
           </div>
         </div>
@@ -71,14 +71,22 @@
       <div class="path-container">
         <div class="path-line"></div>
 
-        <div class="path-item active" v-for="level in levels" :key="level.id">
-          <div class="path-icon">🟢</div>
+        <div
+          class="path-item"
+          :class="isLevelUnlocked(level.id) ? 'active' : 'locked'"
+          v-for="level in levels"
+          :key="level.id"
+        >
+          <div class="path-icon">{{ isLevelUnlocked(level.id) ? '🟢' : '🔒' }}</div>
           <div class="path-content">
             <div class="path-number">Seviye {{ level.id }}</div>
             <div class="path-title">{{ level.title }}</div>
-            <div class="path-progress">Hazır - hemen başlayabilirsin</div>
+            <div class="path-progress">
+              {{ isLevelUnlocked(level.id) ? 'Hazır - başlayabilirsin' : `Önce Seviye ${Number(level.id) - 1} tamamlanmalı` }}
+            </div>
           </div>
-          <router-link :to="`/level/${level.id}`" class="btn btn-sm">Başla</router-link>
+          <router-link v-if="isLevelUnlocked(level.id)" :to="`/level/${level.id}`" class="btn btn-sm">Başla</router-link>
+          <button v-else class="btn btn-sm btn-disabled" disabled>Kilitli</button>
         </div>
       </div>
     </div>
@@ -88,14 +96,44 @@
 <script>
 import { levels } from '@/utils/marketingData/levels';
 import { allTasks } from '@/utils/marketingData/learning-content';
+import { loadProgress, isLevelUnlocked as isLevelUnlockedByProgress, subscribeProgress } from '@/utils/progressStore';
 
 export default {
   name: 'HomeView',
   data() {
     return {
       levels,
-      totalTasks: allTasks.length
+      totalTasks: allTasks.length,
+      progress: loadProgress(),
+      unsubscribeProgress: null
     };
+  },
+  computed: {
+    completedTaskCount() {
+      return this.progress.completedTasks.length;
+    },
+    progressPercentage() {
+      if (!this.totalTasks) return 0;
+      return Math.round((this.completedTaskCount / this.totalTasks) * 100);
+    },
+    unlockedLevel() {
+      return Number(this.progress.unlockedLevel || 1);
+    }
+  },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.progress = progress;
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
+    }
+  },
+  methods: {
+    isLevelUnlocked(levelId) {
+      return isLevelUnlockedByProgress(levelId, this.progress);
+    }
   }
 };
 </script>
@@ -288,6 +326,11 @@ h1 {
   background: #f7fbff;
 }
 
+.path-item.locked {
+  border-color: #e9ecef;
+  background: #f8f9fa;
+}
+
 .path-title {
   font-weight: 600;
 }
@@ -295,6 +338,12 @@ h1 {
 .path-progress {
   color: #6c757d;
   font-size: 0.9rem;
+}
+
+.btn-disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #f1f3f5;
 }
 
 @media (max-width: 900px) {

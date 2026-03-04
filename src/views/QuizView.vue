@@ -13,7 +13,13 @@
       <p class="subtitle">{{ quiz.description }}</p>
     </div>
 
-    <div class="quiz-container" v-if="!quizCompleted">
+    <div v-if="!isUnlocked" class="quiz-card">
+      <h2>Bu Quiz Henüz Kilitli</h2>
+      <p>Bu seviyeye geçmeden önce önceki seviyeyi görev + quiz ile tamamlamanız gerekir.</p>
+      <router-link :to="`/level/${Math.max(1, Number(levelId) - 1)}`" class="btn btn-primary">Önceki Seviyeye Git</router-link>
+    </div>
+
+    <div class="quiz-container" v-else-if="!quizCompleted">
       <div class="quiz-progress">
         <div class="quiz-progress-text">Soru {{ currentQuestionIndex + 1 }}/{{ quiz.questions.length }}</div>
         <div class="progress-bar">
@@ -104,6 +110,7 @@
 
 <script>
 import { levelQuizzes } from '@/utils/marketingData/learning-content';
+import { isLevelUnlocked, loadProgress, saveQuizResult, subscribeProgress } from '@/utils/progressStore';
 
 export default {
   name: 'QuizView',
@@ -121,10 +128,15 @@ export default {
       isResultShown: false,
       quizCompleted: false,
       userAnswers: [],
-      correctAnswers: 0
+      correctAnswers: 0,
+      progress: loadProgress(),
+      unsubscribeProgress: null
     };
   },
   computed: {
+    isUnlocked() {
+      return isLevelUnlocked(this.levelId, this.progress);
+    },
     quiz() {
       return this.quizzes.find((item) => item.levelId === this.levelId) || this.quizzes[0];
     },
@@ -154,6 +166,17 @@ export default {
   watch: {
     levelId() {
       this.restartQuiz();
+      this.progress = loadProgress();
+    }
+  },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.progress = progress;
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
     }
   },
   methods: {
@@ -180,6 +203,7 @@ export default {
     },
     finishQuiz() {
       this.quizCompleted = true;
+      saveQuizResult(this.levelId, this.score);
     },
     restartQuiz() {
       this.currentQuestionIndex = 0;

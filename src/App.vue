@@ -89,6 +89,7 @@
 <script>
 import { initUserSession } from './utils/firebaseService';
 import { levels } from './utils/marketingData/levels';
+import { loadProgress, subscribeProgress } from './utils/progressStore';
 
 export default {
   name: 'App',
@@ -96,19 +97,14 @@ export default {
     return {
       loading: true,
       userId: null,
-      userProgress: null,
+      userProgress: loadProgress(),
       levels: levels,
-      visibleLevels: levels
+      visibleLevels: [],
+      unsubscribeProgress: null
     };
   },
   async created() {
-    this.userProgress = {
-      completedTasks: [],
-      completedQuizzes: [],
-      earnedAchievements: [],
-      currentLevel: 1,
-      totalPoints: 0
-    };
+    this.userProgress = loadProgress();
     this.filterVisibleLevels();
 
     try {
@@ -123,10 +119,21 @@ export default {
       this.loading = false;
     }
   },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.userProgress = progress;
+      this.filterVisibleLevels();
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
+    }
+  },
   methods: {
     filterVisibleLevels() {
-      // First login starts from scratch but with full access to all levels.
-      this.visibleLevels = this.levels;
+      const unlockedLevel = Number(this.userProgress?.unlockedLevel || 1);
+      this.visibleLevels = this.levels.filter((level) => level.order <= unlockedLevel);
     },
     getLevelIcon(order) {
       const icons = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'];
