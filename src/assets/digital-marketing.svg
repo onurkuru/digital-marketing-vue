@@ -1,0 +1,54 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Elements -->
+  <rect x="0" y="0" width="400" height="300" fill="#f8f9fa" rx="20" ry="20" />
+  
+  <!-- Decorative Shapes -->
+  <circle cx="60" cy="50" r="30" fill="#e9ecef" />
+  <circle cx="340" cy="260" r="20" fill="#e9ecef" />
+  <rect x="300" y="30" width="60" height="30" rx="10" ry="10" fill="#e9ecef" />
+  <rect x="30" y="240" width="40" height="40" rx="8" ry="8" fill="#e9ecef" />
+  
+  <!-- Digital Marketing Elements -->
+  
+  <!-- Computer/Monitor -->
+  <rect x="130" y="80" width="140" height="100" rx="5" ry="5" fill="#dee2e6" />
+  <rect x="135" y="85" width="130" height="90" rx="2" ry="2" fill="#ffffff" />
+  
+  <!-- Computer Stand -->
+  <rect x="185" y="180" width="30" height="10" fill="#adb5bd" />
+  <rect x="175" y="190" width="50" height="5" rx="2" ry="2" fill="#6c757d" />
+  
+  <!-- Graph on Screen -->
+  <polyline points="150,150 170,130 190,145 210,110 230,125 250,95" 
+            stroke="#0d6efd" stroke-width="3" fill="none" />
+  <circle cx="150" cy="150" r="4" fill="#0d6efd" />
+  <circle cx="170" cy="130" r="4" fill="#0d6efd" />
+  <circle cx="190" cy="145" r="4" fill="#0d6efd" />
+  <circle cx="210" cy="110" r="4" fill="#0d6efd" />
+  <circle cx="230" cy="125" r="4" fill="#0d6efd" />
+  <circle cx="250" cy="95" r="4" fill="#0d6efd" />
+  
+  <!-- SEO Element -->
+  <circle cx="300" cy="120" r="30" fill="#d1e7dd" />
+  <text x="300" y="125" font-family="Arial" font-size="14" font-weight="bold" fill="#0f5132" text-anchor="middle">SEO</text>
+  
+  <!-- Email Element -->
+  <rect x="280" y="170" width="40" height="30" rx="5" ry="5" fill="#fff3cd" />
+  <path d="M280,170 L300,185 L320,170" stroke="#664d03" stroke-width="2" fill="none" />
+  
+  <!-- Social Media Element -->
+  <circle cx="70" cy="120" r="20" fill="#cfe2ff" />
+  <text x="70" y="125" font-family="Arial" font-size="12" font-weight="bold" fill="#084298" text-anchor="middle">SM</text>
+  
+  <!-- Megaphone/Marketing icon -->
+  <path d="M60,170 L90,155 L90,185 L60,170" fill="#fd7e14" />
+  <rect x="90" y="155" width="10" height="30" fill="#fd7e14" />
+  <path d="M100,155 Q110,150 115,155 Q120,170 115,185 Q110,190 100,185 Z" fill="#fd7e14" />
+  <path d="M115,155 L130,150 L130,190 L115,185" fill="#fd7e14" opacity="0.7" />
+  
+  <!-- Connection Lines -->
+  <line x1="160" y1="130" x2="90" y2="130" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="3,3" />
+  <line x1="240" y1="110" x2="280" y2="120" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="3,3" />
+  <line x1="200" y1="145" x2="200" y2="190" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="3,3" />
+  <line x1="230" y1="150" x2="280" y2="170" stroke="#6c757d" stroke-width="1.5" stroke-dasharray="3,3" />
+</svg> 
