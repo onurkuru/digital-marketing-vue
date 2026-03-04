@@ -163,14 +163,10 @@ async function verifyTurnstile(token, remoteIp) {
   return Boolean(result.success);
 }
 
-async function sendEmail(payload) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.SUBMISSION_FROM_EMAIL;
-  const toEmail = process.env.SUBMISSION_TO_EMAIL;
-
-  if (!apiKey || !fromEmail || !toEmail) {
-    throw new AppError('Mail servisi yapılandırması eksik.', 500);
-  }
+async function sendViaResend(payload, options) {
+  const apiKey = options.apiKey;
+  const fromEmail = options.fromEmail;
+  const toEmail = options.toEmail;
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -191,8 +187,173 @@ async function sendEmail(payload) {
 
   if (!response.ok) {
     const errorPayload = await response.json().catch(() => ({}));
-    throw new AppError(errorPayload.message || 'Mail gönderimi başarısız oldu.', 502);
+    throw new AppError(errorPayload.message || 'Resend ile mail gönderimi başarısız oldu.', 502);
   }
+}
+
+function resolveSiteBaseUrl() {
+  const explicit = sanitizeText(process.env.URL, 300);
+  if (explicit) return explicit;
+
+  const deployPrime = sanitizeText(process.env.DEPLOY_PRIME_URL, 300);
+  if (deployPrime) return deployPrime;
+
+  return '';
+}
+
+async function sendViaNetlifyEmails(payload, options) {
+  const baseUrl = resolveSiteBaseUrl();
+  if (!baseUrl) {
+    throw new AppError('Netlify URL değişkeni bulunamadı.', 500);
+  }
+
+  const response = await fetch(`${baseUrl}/.netlify/functions/emails/task-submission`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'netlify-emails-secret': options.secret
+    },
+    body: JSON.stringify({
+      from: options.fromEmail,
+      to: options.toEmail,
+      subject: payload.subject,
+      replyTo: payload.senderEmail,
+      parameters: {
+        fullName: payload.fullName,
+        senderEmail: payload.senderEmail,
+        taskId: payload.taskId,
+        taskTitle: payload.taskTitle,
+        levelId: payload.levelId,
+        submittedAt: payload.submittedAt,
+        summary: payload.summary,
+        details: payload.details,
+        notes: payload.notes || 'Not eklenmedi.',
+        attachmentCount: String(payload.attachments.length)
+      },
+      attachments: payload.attachments
+    })
+  });
+
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => ({}));
+    throw new AppError(errorPayload.error || 'Netlify Email Integration ile gönderim başarısız oldu.', 502);
+  }
+}
+
+async function sendViaPostmark(payload, options) {
+  const serverToken = options.serverToken;
+  const fromEmail = options.fromEmail;
+  const toEmail = options.toEmail;
+  const messageStream = options.messageStream || 'outbound';
+
+  const response = await fetch('https://api.postmarkapp.com/email', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'X-Postmark-Server-Token': serverToken
+    },
+    body: JSON.stringify({
+      From: fromEmail,
+      To: toEmail,
+      ReplyTo: payload.senderEmail,
+      Subject: payload.subject,
+      TextBody: payload.textBody,
+      HtmlBody: payload.htmlBody,
+      MessageStream: messageStream,
+      Attachments: payload.attachments.map((attachment) => ({
+        Name: attachment.filename,
+        Content: attachment.content,
+        ContentType: attachment.type
+      }))
+    })
+  });
+
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => ({}));
+    throw new AppError(errorPayload.Message || 'Postmark ile mail gönderimi başarısız oldu.', 502);
+  }
+}
+
+async function sendEmail(payload) {
+  const provider = String(process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
+  const netlifyEmailsSecret = process.env.NETLIFY_EMAILS_SECRET;
+  const postmarkToken = process.env.POSTMARK_SERVER_TOKEN;
+  const resendApiKey = process.env.RESEND_API_KEY;
+  const fromEmail = process.env.SUBMISSION_FROM_EMAIL;
+  const toEmail = process.env.SUBMISSION_TO_EMAIL;
+
+  if (!fromEmail || !toEmail) {
+    throw new AppError('Mail servisi yapılandırması eksik.', 500);
+  }
+
+  if (provider === 'netlify') {
+    if (!netlifyEmailsSecret) {
+      throw new AppError('NETLIFY_EMAILS_SECRET eksik.', 500);
+    }
+    await sendViaNetlifyEmails(payload, {
+      secret: netlifyEmailsSecret,
+      fromEmail,
+      toEmail
+    });
+    return;
+  }
+
+  if (provider === 'postmark') {
+    if (!postmarkToken) {
+      throw new AppError('POSTMARK_SERVER_TOKEN eksik.', 500);
+    }
+    await sendViaPostmark(payload, {
+      serverToken: postmarkToken,
+      fromEmail,
+      toEmail,
+      messageStream: process.env.POSTMARK_MESSAGE_STREAM || 'outbound'
+    });
+    return;
+  }
+
+  if (provider === 'resend') {
+    if (!resendApiKey) {
+      throw new AppError('RESEND_API_KEY eksik.', 500);
+    }
+    await sendViaResend(payload, {
+      apiKey: resendApiKey,
+      fromEmail,
+      toEmail
+    });
+    return;
+  }
+
+  // Otomatik seçim: Postmark varsa Postmark, yoksa Resend.
+  if (netlifyEmailsSecret) {
+    await sendViaNetlifyEmails(payload, {
+      secret: netlifyEmailsSecret,
+      fromEmail,
+      toEmail
+    });
+    return;
+  }
+
+  if (postmarkToken) {
+    await sendViaPostmark(payload, {
+      serverToken: postmarkToken,
+      fromEmail,
+      toEmail,
+      messageStream: process.env.POSTMARK_MESSAGE_STREAM || 'outbound'
+    });
+    return;
+  }
+
+  if (resendApiKey) {
+    await sendViaResend(payload, {
+      apiKey: resendApiKey,
+      fromEmail,
+      toEmail
+    });
+    return;
+  }
+
+  throw new AppError('Mail sağlayıcı anahtarı bulunamadı (POSTMARK_SERVER_TOKEN veya RESEND_API_KEY).', 500);
 }
 
 exports.handler = async (event) => {
@@ -274,7 +435,15 @@ exports.handler = async (event) => {
     `;
 
     await sendEmail({
+      fullName,
       senderEmail,
+      taskId,
+      taskTitle,
+      levelId,
+      submittedAt,
+      summary: subject,
+      details,
+      notes,
       subject: `[Görev Teslimi] ${subject}`,
       textBody,
       htmlBody,
