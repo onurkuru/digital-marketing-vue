@@ -47,15 +47,59 @@
     <div class="level-content card">
       <h2>{{ level.title }} Eğitimi</h2>
 
-      <div class="content-sections" v-if="sections.length">
-        <div v-for="section in sections" :key="section.title" class="content-section">
-          <h3>{{ section.title }}</h3>
-          <p>{{ section.text }}</p>
-          <p v-for="detail in section.details || []" :key="`${section.title}-${detail}`">{{ detail }}</p>
+      <div class="slide-deck" v-if="slides.length && activeSlide">
+        <div class="slide-deck-header">
+          <span class="slide-deck-label">Online Konu Anlatımı</span>
+          <span class="slide-deck-index">{{ currentSlideIndex + 1 }} / {{ slides.length }}</span>
+        </div>
 
-          <ul v-if="section.bullets && section.bullets.length">
-            <li v-for="bullet in section.bullets" :key="bullet">{{ bullet }}</li>
+        <div class="slide-progress">
+          <div class="slide-progress-fill" :style="{ width: `${slideProgress}%` }"></div>
+        </div>
+
+        <article class="slide-card">
+          <h3>{{ activeSlide.title }}</h3>
+          <p>{{ activeSlide.text }}</p>
+
+          <ul v-if="activeSlide.bullets && activeSlide.bullets.length">
+            <li v-for="bullet in activeSlide.bullets" :key="`${activeSlide.id}-${bullet}`">{{ bullet }}</li>
           </ul>
+
+          <div v-if="activeSlide.notes && activeSlide.notes.length" class="slide-notes">
+            <h4>Notlar</h4>
+            <p v-for="note in activeSlide.notes" :key="`${activeSlide.id}-${note}`">{{ note }}</p>
+          </div>
+        </article>
+
+        <div class="slide-controls">
+          <button
+            type="button"
+            class="btn btn-outline"
+            :disabled="currentSlideIndex === 0"
+            @click="prevSlide"
+          >
+            Önceki
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="currentSlideIndex === slides.length - 1"
+            @click="nextSlide"
+          >
+            Sonraki
+          </button>
+        </div>
+
+        <div class="slide-dots">
+          <button
+            v-for="(slide, index) in slides"
+            :key="slide.id"
+            type="button"
+            class="slide-dot"
+            :class="{ active: index === currentSlideIndex }"
+            :aria-label="`${index + 1}. slayta git`"
+            @click="goToSlide(index)"
+          ></button>
         </div>
       </div>
 
@@ -108,7 +152,7 @@
 
 <script>
 import { levels } from '@/utils/marketingData/levels';
-import { tasksByLevel, levelContentSections } from '@/utils/marketingData/learning-content';
+import { tasksByLevel, levelContentSections, levelSlides } from '@/utils/marketingData/learning-content';
 import { getTaskStatus, isLevelUnlocked, loadProgress, subscribeProgress } from '@/utils/progressStore';
 
 export default {
@@ -122,6 +166,7 @@ export default {
   data() {
     return {
       progress: loadProgress(),
+      currentSlideIndex: 0,
       unsubscribeProgress: null
     };
   },
@@ -134,6 +179,16 @@ export default {
     },
     sections() {
       return levelContentSections[this.level.id] || [];
+    },
+    slides() {
+      return levelSlides[this.level.id] || [];
+    },
+    activeSlide() {
+      return this.slides[this.currentSlideIndex] || null;
+    },
+    slideProgress() {
+      if (!this.slides.length) return 0;
+      return Math.round(((this.currentSlideIndex + 1) / this.slides.length) * 100);
     },
     tasksInLevel() {
       const levelTasks = tasksByLevel[this.level.id] || [];
@@ -163,6 +218,35 @@ export default {
       const quizProgress = this.quizScore ? this.quizScore / 100 : 0;
       const total = (contentProgress * 0.3) + (taskProgress * 0.5) + (quizProgress * 0.2);
       return Math.round(total * 100);
+    }
+  },
+  watch: {
+    id() {
+      this.currentSlideIndex = 0;
+    },
+    slides(newSlides) {
+      if (!newSlides.length) {
+        this.currentSlideIndex = 0;
+        return;
+      }
+      if (this.currentSlideIndex > newSlides.length - 1) {
+        this.currentSlideIndex = newSlides.length - 1;
+      }
+    }
+  },
+  methods: {
+    nextSlide() {
+      if (this.currentSlideIndex < this.slides.length - 1) {
+        this.currentSlideIndex += 1;
+      }
+    },
+    prevSlide() {
+      if (this.currentSlideIndex > 0) {
+        this.currentSlideIndex -= 1;
+      }
+    },
+    goToSlide(index) {
+      this.currentSlideIndex = index;
     }
   },
   mounted() {
@@ -288,33 +372,117 @@ h1 {
   margin-bottom: 1rem;
 }
 
-.content-sections {
+.slide-deck {
   margin-top: 1.5rem;
 }
 
-.content-section {
-  margin-bottom: 2rem;
+.slide-deck-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
 }
 
-.content-section h3 {
-  font-size: 1.25rem;
+.slide-deck-label {
+  font-size: 0.9rem;
   font-weight: 600;
+  color: #495057;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.slide-deck-index {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.slide-progress {
+  height: 8px;
+  background: #e9ecef;
+  border-radius: 999px;
+  overflow: hidden;
   margin-bottom: 1rem;
 }
 
-.content-section p {
-  margin-bottom: 1rem;
-  line-height: 1.6;
+.slide-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0d6efd 0%, #198754 100%);
+  transition: width 0.2s ease;
 }
 
-.content-section ul {
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
+.slide-card {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  padding: 1.25rem;
+  background: #f8f9fa;
 }
 
-.content-section li {
+.slide-card h3 {
+  font-size: 1.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.slide-card p {
+  line-height: 1.65;
+  margin-bottom: 0.85rem;
+}
+
+.slide-card ul {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.slide-card li {
   margin-bottom: 0.5rem;
-  line-height: 1.6;
+}
+
+.slide-notes {
+  border-top: 1px dashed #ced4da;
+  padding-top: 0.85rem;
+  margin-top: 0.85rem;
+}
+
+.slide-notes h4 {
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+  color: #495057;
+}
+
+.slide-controls {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.slide-controls .btn {
+  min-width: 120px;
+}
+
+.slide-controls .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.slide-dots {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.slide-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid #adb5bd;
+  background: #dee2e6;
+  cursor: pointer;
+}
+
+.slide-dot.active {
+  background: #212529;
+  border-color: #212529;
 }
 
 .empty-content {
@@ -425,6 +593,14 @@ h1 {
   .content-actions .btn {
     width: 100%;
     text-align: center;
+  }
+
+  .slide-controls {
+    flex-direction: column;
+  }
+
+  .slide-controls .btn {
+    width: 100%;
   }
 }
 </style>

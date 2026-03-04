@@ -941,6 +941,67 @@ Object.values(levelContentSections).forEach((sections) => {
   });
 });
 
+function buildLevelSlides(level) {
+  const sections = levelContentSections[level.id] || [];
+  const slides = [
+    {
+      id: `${level.id}-intro`,
+      title: `${level.title} - Giriş`,
+      text: level.description,
+      bullets: [
+        `Seviye: ${level.order}`,
+        `Toplam görev: ${level.totalTasks}`,
+        `Hedef puan: ${level.points}`
+      ],
+      notes: [level.subtitle]
+    }
+  ];
+
+  sections.forEach((section, index) => {
+    slides.push({
+      id: `${level.id}-section-${index + 1}`,
+      title: section.title,
+      text: section.text,
+      bullets: section.bullets || [],
+      notes: section.details || []
+    });
+  });
+
+  slides.push({
+    id: `${level.id}-topics`,
+    title: 'Konu Başlıkları',
+    text: 'Bu seviyede odaklanacağın ana başlıklar:',
+    bullets: level.topics || [],
+    notes: ['Önce başlıkları tarayıp sonra görevlerle pratiğe geçin.']
+  });
+
+  slides.push({
+    id: `${level.id}-outcomes`,
+    title: 'Seviye Sonu Kazanımlar',
+    text: 'Bu seviyeyi tamamladığınızda şunları yapabiliyor olacaksınız:',
+    bullets: level.outcomes || [],
+    notes: ['Kazanımları görev teslimleriyle pekiştirin.']
+  });
+
+  slides.push({
+    id: `${level.id}-next-step`,
+    title: 'Sonraki Adım',
+    text: 'Konu anlatımını bitirdin. Şimdi görevlerden birini açıp uygulamaya geçebilirsin.',
+    bullets: [
+      'En az bir görevi başlat',
+      'Notlarını görev tesliminde kullan',
+      'Quiz ile bilgini test et'
+    ],
+    notes: ['Dilersen bu slaytları tekrar açıp hızlı tekrar yapabilirsin.']
+  });
+
+  return slides;
+}
+
+export const levelSlides = Object.fromEntries(
+  levels.map((level) => [level.id, buildLevelSlides(level)])
+);
+
 const baseLevelQuizzes = [
   {
     id: 'lq1',
