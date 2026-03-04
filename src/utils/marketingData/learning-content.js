@@ -941,58 +941,486 @@ Object.values(levelContentSections).forEach((sections) => {
   });
 });
 
+const defaultPresentationBlueprint = {
+  summary: 'Bu sunumda seviyenin ana kavramları, uygulama adımları ve başarı metrikleri birlikte ele alınır.',
+  topicIntro: '{topic} başlığında temel tanım, iş etkisi ve uygulama yaklaşımı birlikte değerlendirilir.',
+  topicBullets: [
+    '{topic} için hedef, kitle ve kanal uyumunu netleştirin.',
+    '{topic} özelinde ölçülebilir birincil KPI belirleyin.',
+    '{topic} için haftalık test ve iyileştirme döngüsü kurun.'
+  ],
+  implementationSteps: [
+    'Hedefi ölçülebilir formatta tanımlayın.',
+    'Sorumlu kişi, araç ve teslim tarihini netleştirin.',
+    'İlk deneyi 7 gün içinde yayına alın.',
+    'Sonucu raporlayıp bir sonraki deneyi planlayın.'
+  ],
+  metrics: [
+    'Erişim ve görünürlük göstergeleri',
+    'Etkileşim ve trafik göstergeleri',
+    'Dönüşüm ve gelir göstergeleri',
+    'Verimlilik ve maliyet göstergeleri'
+  ],
+  caseStudy: {
+    title: 'Uygulama Vakası',
+    text: 'Yeni bir ürün lansmanında bu seviyedeki prensipleri 30 günlük plana dönüştürün.',
+    bullets: [
+      'İlk hafta: analiz ve hazırlık',
+      'İkinci hafta: kampanya aktivasyonu',
+      'Üçüncü hafta: optimizasyon',
+      'Dördüncü hafta: raporlama ve karar'
+    ]
+  },
+  wrapUp: [
+    'En kritik iki öğrenimi not edin.',
+    'Görev ekranından bir uygulama görevi seçin.',
+    'Çıktıyı standart teslim formatı ile paylaşın.',
+    'Quiz ile bilgi seviyenizi ölçün.'
+  ]
+};
+
+const levelPresentationBlueprints = {
+  '1': {
+    summary: 'Temel Kavramlar içerik sunumu; dijital pazarlamanın sözlüğünü, temel metriklerini ve ilk strateji kurulumunu netleştirir.',
+    topicIntro: '{topic} başlığında amaç, ekip içinde ortak dil oluşturmak ve kararları veriyle desteklemektir.',
+    topicBullets: [
+      '{topic} ile ilgili temel tanım ve kapsamı 1 cümlede ifade edin.',
+      '{topic} için başlangıç KPI setini belirleyin (ör. CTR, CPC, CR).',
+      '{topic} alanında sık yapılan hataları notlayıp kontrol listesine ekleyin.'
+    ],
+    implementationSteps: [
+      'Hedef-kitle-mesaj-kanal eşleştirmesini tek tabloya toplayın.',
+      'Her kanal için bir ana KPI ve bir destek KPI seçin.',
+      'Haftalık değerlendirme toplantısında yalnızca veriye dayalı karar alın.',
+      'Bir sonraki hafta için tek bir iyileştirme hipotezi yazın.'
+    ],
+    metrics: ['CTR', 'CPC', 'Dönüşüm Oranı', 'CAC / LTV oranı'],
+    caseStudy: {
+      title: 'Vaka: Fintech Uygulama Lansmanı',
+      text: 'Yeni bir finans uygulamasının ilk kullanıcı kazanım planını temel kavramlarla kurgulayın.',
+      bullets: [
+        'Hedef kitleyi iki ana segmente ayırın.',
+        'Her segment için tek değer önerisi yazın.',
+        'İlk 14 gün için kanal-mesaj eşleştirmesi çıkarın.',
+        'Lansman sonrası performansı temel metriklerle ölçün.'
+      ]
+    },
+    wrapUp: [
+      'Pazarlama sözlüğünüzü ekip içinde standardize edin.',
+      'Bir KPI dashboard taslağı oluşturun.',
+      'İlk görev için kısa aksiyon planı paylaşın.',
+      'Quiz öncesi kritik kavramları tekrar edin.'
+    ]
+  },
+  '2': {
+    summary: 'SEO Temelleri içerik sunumu; teknik SEO, içerik stratejisi ve otorite inşasını tek bir büyüme sistemi olarak ele alır.',
+    topicIntro: '{topic} başlığında arama niyeti, içerik eşleşmesi ve sıralama sinyalleri birlikte değerlendirilir.',
+    topicBullets: [
+      '{topic} için mevcut durum analizi yapın (teknik + içerik + otorite).',
+      '{topic} kapsamında kullanıcı niyeti ile sayfa türünü eşleştirin.',
+      '{topic} için 30 günlük optimizasyon backlog listesi hazırlayın.'
+    ],
+    implementationSteps: [
+      'Site taraması ile teknik hataları önceliklendirin.',
+      'Anahtar kelime kümelerini funnel aşamalarına ayırın.',
+      'Her küme için bir pillar ve destek içerikler planlayın.',
+      'İndeks, sıralama ve organik dönüşüm metriğini haftalık takip edin.'
+    ],
+    metrics: ['Organik Oturum', 'Ortalama Sıralama', 'Click Through Rate', 'Organik Dönüşüm'],
+    caseStudy: {
+      title: 'Vaka: B2B SaaS Organik Büyüme',
+      text: 'Demo talebi artırmak için SEO odaklı içerik kümesi oluşturun.',
+      bullets: [
+        '3 ticari niyetli anahtar kelime kümesi seçin.',
+        'Her küme için açılış sayfası ve destek blog planlayın.',
+        'İç linkleme ve schema düzeni kurun.',
+        '4 haftalık sıralama ve lead etkisini raporlayın.'
+      ]
+    },
+    wrapUp: [
+      'Teknik SEO öncelik listesi oluşturun.',
+      'İlk içerik kümesini yayına hazırlayın.',
+      'Backlink fırsat listesini başlatın.',
+      'Quiz öncesi on-page / off-page farkını tekrar edin.'
+    ]
+  },
+  '3': {
+    summary: 'Sosyal Medya Pazarlaması içerik sunumu; platform rolü, içerik formatı ve dönüşüm etkisini tek çatı altında yönetir.',
+    topicIntro: '{topic} başlığında platform dinamiğine uygun yaratıcı üretim ve ölçümleme yaklaşımı kurulur.',
+    topicBullets: [
+      '{topic} için platforma özel içerik formatı belirleyin.',
+      '{topic} kapsamında hedef davranış için net CTA tanımlayın.',
+      '{topic} çalışmasında etkileşim ve dönüşüm etkisini birlikte izleyin.'
+    ],
+    implementationSteps: [
+      'Aylık içerik takvimini hedeflere göre sınıflandırın.',
+      'Kısa video, carousel ve statik formatları test edin.',
+      'Topluluk yönetimi için yanıt SLA standardı belirleyin.',
+      'Performans raporunda yalnızca beğeni değil iş etkisini gösterin.'
+    ],
+    metrics: ['Etkileşim Oranı', 'Profil Ziyareti', 'Sosyal Trafik', 'Sosyal Kaynaklı Lead'],
+    caseStudy: {
+      title: 'Vaka: Yeni Ürün İçin Sosyal Medya Sprinti',
+      text: '14 günlük lansman döneminde organik + reklam destekli sosyal medya planı oluşturun.',
+      bullets: [
+        'Farkındalık, düşünme ve dönüşüm içeriklerini ayırın.',
+        'Her aşama için 2 farklı kreatif varyasyon hazırlayın.',
+        'Kampanya ortasında düşük performanslı kreatifleri değiştirin.',
+        'Sprint sonunda içerik öğrenim raporu çıkarın.'
+      ]
+    },
+    wrapUp: [
+      'Platform bazlı rol dağılımını netleştirin.',
+      'En iyi performans veren formatı belirleyin.',
+      'Topluluk etkileşimini görevlerle pekiştirin.',
+      'Quiz öncesi KPI eşleştirmesini tekrar edin.'
+    ]
+  },
+  '4': {
+    summary: 'İçerik Pazarlaması içerik sunumu; içerik üretimini sistematik planlama, dağıtım ve ölçümleme modeliyle birleştirir.',
+    topicIntro: '{topic} başlığında içerik fikrini iş hedefi ve dağıtım kanalıyla birlikte tasarlayın.',
+    topicBullets: [
+      '{topic} için hedef persona ve arama niyetini netleştirin.',
+      '{topic} çıktısını TOFU-MOFU-BOFU akışında konumlandırın.',
+      '{topic} için tekrar kullanım (repurpose) adımlarını planlayın.'
+    ],
+    implementationSteps: [
+      '3 aylık editorial planı haftalık sprintlere bölün.',
+      'Her içerik için tek ana hedef ve tek ana CTA belirleyin.',
+      'Yayın sonrası dağıtımı owned-earned-paid karışımıyla yapın.',
+      '30 gün sonunda güncelleme gerektiren içerikleri işaretleyin.'
+    ],
+    metrics: ['İçerik Başına Oturum', 'Ortalama Okuma Süresi', 'MQL / Lead', 'İçerik Kaynaklı Gelir'],
+    caseStudy: {
+      title: 'Vaka: Blogdan Lead Motoruna',
+      text: 'Mevcut blog içeriklerini dönüşüm odaklı hale getirerek lead üretimini artırın.',
+      bullets: [
+        'En yüksek trafikli 5 içeriği seçin.',
+        'Bu içeriklere uygun lead magnet ve CTA ekleyin.',
+        'İç link yapısını funnel akışına göre güncelleyin.',
+        'Aylık lead artışını raporlayın.'
+      ]
+    },
+    wrapUp: [
+      'İçerik üretim ve dağıtım sorumlularını belirleyin.',
+      'İlk içerik kümenizi yayın planına alın.',
+      'Düşük performanslı içerikler için revizyon takvimi çıkarın.',
+      'Quiz öncesi içerik hunisi kavramını tekrar edin.'
+    ]
+  },
+  '5': {
+    summary: 'E-posta Pazarlaması içerik sunumu; segmentasyon, otomasyon ve teslim edilebilirlik odaklı bir gelir kanalı inşa eder.',
+    topicIntro: '{topic} başlığında kişiselleştirme, zamanlama ve dönüşüm hedefleri birlikte optimize edilir.',
+    topicBullets: [
+      '{topic} için hedef segmentleri davranışa göre ayırın.',
+      '{topic} kapsamında konu satırı ve içerik mesajını uyumlayın.',
+      '{topic} performansını açılma, tıklama ve dönüşüm birlikte yorumlayın.'
+    ],
+    implementationSteps: [
+      'Listeyi kaynak kalitesine göre temizleyin ve etiketleyin.',
+      'Welcome, nurturing ve re-engagement akışlarını kurgulayın.',
+      'Her kampanyada tek hipotezle A/B test çalıştırın.',
+      'Teslim edilebilirlik sorunlarını domain sağlığıyla izleyin.'
+    ],
+    metrics: ['Open Rate', 'Click Rate', 'Email Conversion', 'Unsubscribe / Spam Rate'],
+    caseStudy: {
+      title: 'Vaka: E-ticarette Sepet Terk Kurtarma',
+      text: 'Sepet terk eden kullanıcılara 3 adımlı otomasyon akışıyla geri dönüşüm sağlayın.',
+      bullets: [
+        '0-2 saat: hatırlatma e-postası',
+        '24 saat: sosyal kanıt ve fayda mesajı',
+        '48 saat: sınırlı süre teklif e-postası',
+        'Akış performansını segment bazında karşılaştırın.'
+      ]
+    },
+    wrapUp: [
+      'Liste hijyen kontrolü için haftalık rutin tanımlayın.',
+      'İki otomasyon akışını canlıya alın.',
+      'Görev teslimi için e-posta rapor formatını hazırlayın.',
+      'Quiz öncesi temel e-posta metriklerini tekrar edin.'
+    ]
+  },
+  '6': {
+    summary: 'Ücretli Reklamcılık içerik sunumu; teklif stratejisi, kreatif test ve bütçe yönetimiyle kârlı büyüme modeli kurar.',
+    topicIntro: '{topic} başlığında hedefleme, teklif ve kreatif performansı birlikte optimize edilir.',
+    topicBullets: [
+      '{topic} için net kampanya amacı ve başarı metriği seçin.',
+      '{topic} kapsamında hedef kitleyi soğuk-ılık-sıcak olarak ayırın.',
+      '{topic} çalışmasında haftalık optimizasyon deneyi planlayın.'
+    ],
+    implementationSteps: [
+      'Kampanya yapısını hedefe göre sadeleştirin.',
+      'Kreatif testini tek değişken prensibiyle yönetin.',
+      'Bütçeyi performans ve öğrenim hızına göre dağıtın.',
+      'Negatif sinyalleri (frekans, CPA artışı) erken yakalayın.'
+    ],
+    metrics: ['CPA', 'ROAS', 'CTR', 'Frekans / Saturation'],
+    caseStudy: {
+      title: 'Vaka: Performans Kampanyası Revizyonu',
+      text: 'Yüksek maliyetli kampanyayı 3 haftada kârlı seviyeye taşımak için optimizasyon planı kurun.',
+      bullets: [
+        'Düşük niyetli kitleleri ayırın.',
+        'Yüksek intent segmentlere bütçe kaydırın.',
+        'Kreatif mesajı teklif ile uyumlayın.',
+        'Haftalık ROAS ve CPA trendini raporlayın.'
+      ]
+    },
+    wrapUp: [
+      'Kampanya isimlendirme standardı belirleyin.',
+      'Test takvimi ve karar eşiği tanımlayın.',
+      'Remarketing akışını yeniden kurgulayın.',
+      'Quiz öncesi teklif stratejilerini tekrar edin.'
+    ]
+  },
+  '7': {
+    summary: 'Analitik ve Ölçümleme içerik sunumu; doğru veri modeli, KPI hiyerarşisi ve aksiyon odaklı raporlama kültürü oluşturur.',
+    topicIntro: '{topic} başlığında veri toplama, yorumlama ve karar alma katmanları bir arada ele alınır.',
+    topicBullets: [
+      '{topic} için veri kaynağı, sahiplik ve güncellik tanımı yapın.',
+      '{topic} kapsamında iş hedefiyle bağlı KPI ağacı oluşturun.',
+      '{topic} raporlarında aksiyona dönüşen içgörü üretin.'
+    ],
+    implementationSteps: [
+      'GA4 event planını iş hedeflerine göre revize edin.',
+      'UTM standardı ve naming sözlüğünü sabitleyin.',
+      'Yönetim ve operasyon için ayrı dashboard tasarlayın.',
+      'Anomali kuralları ile otomatik uyarı sistemi kurun.'
+    ],
+    metrics: ['Veri Doğruluk Oranı', 'Dönüşüm İzleme Kapsamı', 'KPI Hedef Sapması', 'Raporlama Çevrim Süresi'],
+    caseStudy: {
+      title: 'Vaka: Dashboard’dan Karar Mekanizmasına',
+      text: 'Pazarlama dashboard’unu sadece izleme değil, karar üretme aracı haline getirin.',
+      bullets: [
+        'Her panel için tek karar sorusu yazın.',
+        'Eşik değer aşımında sorumlu kişiyi tanımlayın.',
+        'Haftalık içgörü toplantısını standart ajanda ile yürütün.',
+        'Alınan kararın sonraki haftaki etkisini ölçün.'
+      ]
+    },
+    wrapUp: [
+      'Ölçüm planı dokümanını güncelleyin.',
+      'KPI ağacı ile ekip hedeflerini eşleyin.',
+      'Rapor şablonunu aksiyon alanı ile genişletin.',
+      'Quiz öncesi metrik yorumlama örneklerini tekrar edin.'
+    ]
+  },
+  '8': {
+    summary: 'Dijital Pazarlama Stratejisi içerik sunumu; kanallar arası entegrasyon, bütçe yönetimi ve risk planlamasıyla ölçeklenebilir büyüme tasarlar.',
+    topicIntro: '{topic} başlığında kanal, bütçe ve ekip kararları tek iş hedefi etrafında hizalanır.',
+    topicBullets: [
+      '{topic} için stratejik karar setini yazılı hale getirin.',
+      '{topic} kapsamında kanal rolleri ve kaynak planını netleştirin.',
+      '{topic} uygulamasında risk senaryoları için alternatif plan çıkarın.'
+    ],
+    implementationSteps: [
+      'Yıllık hedefleri çeyreklik OKR formatına dönüştürün.',
+      'Kanal bütçesini büyüme ve verimlilik dengesiyle paylaştırın.',
+      'Kriz anında devreye girecek karar ağacını hazırlayın.',
+      'Strateji toplantılarında öğrenim-temelli revizyon yapın.'
+    ],
+    metrics: ['Pazarlama Kaynaklı Gelir', 'Kanal Bazlı Karlılık', 'Bütçe Gerçekleşme Oranı', 'Stratejik Hedef Tamamlanma'],
+    caseStudy: {
+      title: 'Vaka: 12 Aylık Entegre Büyüme Planı',
+      text: 'Çok kanallı pazarlama yapısını tek bir stratejik yol haritasında birleştirin.',
+      bullets: [
+        'Kanal rolleri ve katkı hedeflerini tanımlayın.',
+        'Bütçe dağılımını senaryo bazlı planlayın.',
+        'Kritik riskler için erken uyarı göstergeleri belirleyin.',
+        'Çeyrek sonlarında strateji revizyonu yapın.'
+      ]
+    },
+    wrapUp: [
+      'Strateji dokümanını tek sayfalık özetle finalize edin.',
+      'Yıllık ve çeyreklik KPI setini netleştirin.',
+      'Ekip sorumluluk matrisi oluşturun.',
+      'Quiz öncesi entegrasyon ve bütçe konularını tekrar edin.'
+    ]
+  }
+};
+
+function fillTemplate(value, topic) {
+  return String(value || '').replaceAll('{topic}', topic);
+}
+
+function buildTopicSlides(level, blueprint) {
+  return (level.topics || []).map((topic, index) => ({
+    id: `${level.id}-topic-${index + 1}`,
+    layout: 'topic',
+    kicker: `Konu ${index + 1}`,
+    title: topic,
+    text: fillTemplate(blueprint.topicIntro || defaultPresentationBlueprint.topicIntro, topic),
+    bullets: (blueprint.topicBullets || defaultPresentationBlueprint.topicBullets).map((item) => fillTemplate(item, topic)),
+    callouts: [
+      {
+        title: 'Hızlı Kontrol',
+        text: `${topic} için mevcut durumda en kritik eksik noktayı belirleyin ve tek cümleyle yazın.`
+      },
+      {
+        title: 'Uygulama Önerisi',
+        text: `${topic} başlığında bu hafta bir mini deney planlayıp sonucu görev teslimine ekleyin.`
+      }
+    ],
+    notes: ['Bu başlığı tamamladıktan sonra ilgili göreve geçerek pratik yapın.']
+  }));
+}
+
+function buildSectionSlides(level, section, index) {
+  const baseBullets = section.bullets || [];
+  return [
+    {
+      id: `${level.id}-section-${index + 1}-overview`,
+      layout: 'standard',
+      kicker: `Çerçeve ${index + 1}`,
+      title: section.title,
+      text: section.text,
+      bullets: baseBullets,
+      notes: section.details || []
+    },
+    {
+      id: `${level.id}-section-${index + 1}-playbook`,
+      layout: 'playbook',
+      kicker: `Uygulama Planı ${index + 1}`,
+      title: `${section.title} Uygulama Planı`,
+      text: 'Bu başlığı operasyonel hale getirmek için aşağıdaki adımları sırayla uygulayın.',
+      steps: [
+        `${section.title} için tek bir ana başarı hedefi belirleyin.`,
+        `${baseBullets[0] || 'Uygulama adımlarını'} ekip içinde sorumlu kişilere dağıtın.`,
+        '7 günlük mini deney planı ile ilk çıktıyı alın.',
+        'Sonuçları raporlayıp bir sonraki sprinti başlatın.'
+      ],
+      callouts: [
+        {
+          title: 'Teslim Beklentisi',
+          text: 'Bu planı görev dokümanına tablo formatında eklemek, değerlendirmeyi hızlandırır.'
+        }
+      ],
+      notes: ['Uygulama planını küçük sprintlere bölmek öğrenme hızını artırır.']
+    }
+  ];
+}
+
+function buildWorkshopSlide(level) {
+  const tasks = tasksByLevel[level.id] || [];
+  const highlightedTasks = tasks.slice(0, 3).map((task, index) => (
+    `${index + 1}. ${task.title} (${task.duration})`
+  ));
+  return {
+    id: `${level.id}-workshop`,
+    layout: 'workshop',
+    kicker: 'Atölye',
+    title: 'Uygulama Atölyesi',
+    text: 'Sunumu bitirdikten sonra bu seviyedeki görevlerle öğrendiğini uygulamaya dönüştür.',
+    bullets: highlightedTasks.length ? highlightedTasks : ['Bu seviyeye ait uygulama görevi bulunamadı.'],
+    steps: [
+      'Bir görev seç ve hedef çıktıyı netleştir.',
+      'Görevi 2-3 parçalık mini sprintlere böl.',
+      'Sonucu görev ekranına yüklemeden önce kalite kontrol yap.',
+      'Bir sonraki görev için iyileştirme notu çıkart.'
+    ],
+    notes: ['Pratik yapmadan bilgi kalıcı hale gelmez. Sunumdan sonra mutlaka bir görev tamamlayın.']
+  };
+}
+
+function buildDeliverySlide(level) {
+  return {
+    id: `${level.id}-delivery-email`,
+    layout: 'delivery',
+    kicker: 'Teslim',
+    title: 'Görev Teslim E-postası Standardı',
+    text: 'Yöneticiye gönderilecek teslim e-postasını standartlaştırarak geri bildirim sürecini hızlandırın.',
+    steps: [
+      `Konu: Seviye ${level.order} - [Görev Adı] - [Tarih]`,
+      'Özet: Hedef, yapılan iş, elde edilen sonuç (3 madde).',
+      'Ekler: Rapor linki, ekran görüntüleri, kullanılan dashboard.',
+      'Beklenti: Onay / geri bildirim için net talep cümlesi.'
+    ],
+    bullets: [
+      'Tek format kullanmak ilerleyiş takibini kolaylaştırır.',
+      'Her teslimde bir sonraki adım önerisi ekleyin.',
+      'Belirsiz ifade yerine ölçülebilir sonuç yazın.'
+    ],
+    notes: ['Bu sunum sonrası en az bir görev teslim e-postası hazırlayın.']
+  };
+}
+
 function buildLevelSlides(level) {
+  const blueprint = levelPresentationBlueprints[level.id] || defaultPresentationBlueprint;
   const sections = levelContentSections[level.id] || [];
+  const caseStudy = blueprint.caseStudy || defaultPresentationBlueprint.caseStudy;
+
   const slides = [
     {
-      id: `${level.id}-intro`,
-      title: `${level.title} - Giriş`,
-      text: level.description,
+      id: `${level.id}-cover`,
+      layout: 'cover',
+      kicker: `Seviye ${level.order}`,
+      title: `${level.title} içerik sunumu`,
+      text: blueprint.summary || defaultPresentationBlueprint.summary,
       bullets: [
-        `Seviye: ${level.order}`,
+        level.subtitle,
         `Toplam görev: ${level.totalTasks}`,
         `Hedef puan: ${level.points}`
       ],
-      notes: [level.subtitle]
+      notes: ['Bu sunum adım adım ilerler. İstediğin slayta soldaki listeden geçiş yapabilirsin.']
+    },
+    {
+      id: `${level.id}-agenda`,
+      layout: 'agenda',
+      kicker: 'Sunum Akışı',
+      title: `${level.title} Yol Haritasi`,
+      text: 'Bu bölümde öğreneceğin konu başlıkları ve beklenen kazanımlar:',
+      steps: level.topics || [],
+      bullets: (level.outcomes || []).slice(0, 4),
+      notes: ['Tüm başlıklar seviyedeki görev ve quiz ile birebir eşleşir.']
     }
   ];
 
+  slides.push(...buildTopicSlides(level, blueprint));
+
   sections.forEach((section, index) => {
-    slides.push({
-      id: `${level.id}-section-${index + 1}`,
-      title: section.title,
-      text: section.text,
-      bullets: section.bullets || [],
-      notes: section.details || []
-    });
+    slides.push(...buildSectionSlides(level, section, index));
   });
 
   slides.push({
-    id: `${level.id}-topics`,
-    title: 'Konu Başlıkları',
-    text: 'Bu seviyede odaklanacağın ana başlıklar:',
-    bullets: level.topics || [],
-    notes: ['Önce başlıkları tarayıp sonra görevlerle pratiğe geçin.']
-  });
-
-  slides.push({
-    id: `${level.id}-outcomes`,
-    title: 'Seviye Sonu Kazanımlar',
-    text: 'Bu seviyeyi tamamladığınızda şunları yapabiliyor olacaksınız:',
-    bullets: level.outcomes || [],
-    notes: ['Kazanımları görev teslimleriyle pekiştirin.']
-  });
-
-  slides.push({
-    id: `${level.id}-next-step`,
-    title: 'Sonraki Adım',
-    text: 'Konu anlatımını bitirdin. Şimdi görevlerden birini açıp uygulamaya geçebilirsin.',
-    bullets: [
-      'En az bir görevi başlat',
-      'Notlarını görev tesliminde kullan',
-      'Quiz ile bilgini test et'
+    id: `${level.id}-metrics`,
+    layout: 'metrics',
+    kicker: 'Ölçümleme',
+    title: 'Başarı Metrikleri ve Dashboard',
+    text: 'Bu seviyedeki çalışmaları aşağıdaki metriklerle takip ederek karar kalitesini artır.',
+    bullets: blueprint.metrics || defaultPresentationBlueprint.metrics,
+    callouts: [
+      {
+        title: 'Haftalık Ritm',
+        text: 'Her hafta metrik trendini yorumlayip tek bir optimizasyon aksiyonu belirleyin.'
+      },
+      {
+        title: 'Aylık Karar',
+        text: 'Aylık toplantıda kanal / içerik / bütçe kararını sadece veri kanıtıyla alın.'
+      }
     ],
-    notes: ['Dilersen bu slaytları tekrar açıp hızlı tekrar yapabilirsin.']
+    notes: ['Metrik seçimi net olmazsa ekip odağını kaybeder.']
+  });
+
+  slides.push({
+    id: `${level.id}-case`,
+    layout: 'case',
+    kicker: 'Vaka',
+    title: caseStudy.title,
+    text: caseStudy.text,
+    bullets: caseStudy.bullets,
+    notes: ['Vakayı görev teslimine mini proje olarak ekleyebilirsiniz.']
+  });
+
+  slides.push(buildWorkshopSlide(level));
+  slides.push(buildDeliverySlide(level));
+
+  slides.push({
+    id: `${level.id}-wrap-up`,
+    layout: 'summary',
+    kicker: 'Kapanış',
+    title: `${level.title} Özet ve Sonraki Adım`,
+    text: 'Sunum tamamlandı. Şimdi bilgiyi uygulamaya dönüştürme zamanı.',
+    bullets: blueprint.wrapUp || defaultPresentationBlueprint.wrapUp,
+    notes: ['Hazırsan görevlere geç, ardından quiz ile seviyeyi tamamla.']
   });
 
   return slides;
