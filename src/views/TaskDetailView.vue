@@ -176,6 +176,10 @@
           <p class="error-text" v-if="captchaError">{{ captchaError }}</p>
         </div>
 
+        <div class="info-text" v-else-if="runtimeCaptchaLoading">
+          Captcha yapılandırması kontrol ediliyor...
+        </div>
+
         <div class="warning-text" v-else>
           Captcha site anahtarı yapılandırılmadığı için form gönderimi kapalı.
         </div>
@@ -262,6 +266,7 @@ export default {
         provider: '',
         siteKey: ''
       },
+      runtimeCaptchaLoading: true,
       captchaToken: '',
       captchaError: '',
       captchaWidgetId: null,
@@ -341,7 +346,9 @@ export default {
   methods: {
     async initializeForm() {
       this.resetSubmissionForm();
+      this.runtimeCaptchaLoading = true;
       await this.loadRuntimeCaptchaConfig();
+      this.runtimeCaptchaLoading = false;
       this.renderCaptcha();
     },
     async loadRuntimeCaptchaConfig() {
@@ -349,24 +356,34 @@ export default {
         return;
       }
 
-      try {
-        const response = await fetch('/api/runtime-config', {
-          method: 'GET',
-          headers: {
-            'Cache-Control': 'no-cache'
-          }
-        });
-        if (!response.ok) return;
-        const data = await response.json();
-        const provider = String(data?.captcha?.provider || '').trim().toLowerCase();
-        const siteKey = String(data?.captcha?.siteKey || '').trim();
-        if (!provider || !siteKey) return;
+      const runtimeConfigEndpoints = [
+        '/api/runtime-config',
+        '/.netlify/functions/runtime-config',
+        '/api/task-submission?mode=config',
+        '/.netlify/functions/task-submission?mode=config'
+      ];
 
-        if (provider === 'turnstile' || provider === 'recaptcha') {
+      for (const endpoint of runtimeConfigEndpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            method: 'GET',
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          });
+          if (!response.ok) continue;
+
+          const data = await response.json();
+          const provider = String(data?.captcha?.provider || '').trim().toLowerCase();
+          const siteKey = String(data?.captcha?.siteKey || '').trim();
+          if (!provider || !siteKey) continue;
+          if (provider !== 'turnstile' && provider !== 'recaptcha') continue;
+
           this.runtimeCaptchaConfig = { provider, siteKey };
+          return;
+        } catch (error) {
+          // no-op
         }
-      } catch (error) {
-        // no-op
       }
     },
     getLevelTitle(levelId) {
@@ -957,6 +974,15 @@ textarea {
   border: 1px solid #ffeeba;
   background: #fff3cd;
   color: #856404;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.info-text {
+  margin-bottom: 1rem;
+  border: 1px solid #cfe2ff;
+  background: #e7f1ff;
+  color: #084298;
   border-radius: 8px;
   padding: 0.75rem;
 }

@@ -42,6 +42,12 @@ function sanitizeText(value, maxLength) {
     .slice(0, maxLength);
 }
 
+function firstNonEmpty(...values) {
+  return values
+    .map((value) => String(value || '').trim())
+    .find((value) => value.length > 0) || '';
+}
+
 function sanitizeFileName(value, fallbackName) {
   const normalized = String(value || fallbackName || 'attachment')
     .replace(/[\\/]/g, '_')
@@ -210,6 +216,28 @@ async function verifyCaptcha(token, remoteIp) {
   }
 
   throw new AppError('Captcha yapılandırması eksik.', 500);
+}
+
+function resolveCaptchaRuntimeConfig() {
+  const turnstileSiteKey = firstNonEmpty(
+    process.env.VITE_TURNSTILE_SITE_KEY,
+    process.env.TURNSTILE_SITE_KEY
+  );
+  const recaptchaSiteKey = firstNonEmpty(
+    process.env.VITE_RECAPTCHA_SITE_KEY,
+    process.env.VITE_SITE_RECAPTCHA_KEY,
+    process.env.SITE_RECAPTCHA_KEY
+  );
+
+  const provider = turnstileSiteKey
+    ? 'turnstile'
+    : (recaptchaSiteKey ? 'recaptcha' : '');
+  const siteKey = turnstileSiteKey || recaptchaSiteKey;
+
+  return {
+    provider,
+    siteKey
+  };
 }
 
 async function sendViaResend(payload, options) {
@@ -406,6 +434,12 @@ async function sendEmail(payload) {
 }
 
 exports.handler = async (event) => {
+  if (event.httpMethod === 'GET') {
+    return jsonResponse(200, {
+      captcha: resolveCaptchaRuntimeConfig()
+    });
+  }
+
   if (event.httpMethod !== 'POST') {
     return jsonResponse(405, { error: 'Method not allowed.' });
   }

@@ -156,9 +156,18 @@ body {
   line-height: 1.6;
 }
 
+html,
+body,
+#app {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .app-container {
   display: flex;
   min-height: 100vh;
+  width: 100%;
 }
 
 /* Sidebar Styles */
@@ -214,6 +223,7 @@ body {
   color: #333;
   border-radius: 4px;
   transition: background-color 0.2s;
+  min-width: 0;
 }
 
 .nav-item:hover {
@@ -240,6 +250,7 @@ body {
   max-width: calc(100% - 250px);
   position: relative;
   min-height: 100vh;
+  min-width: 0;
 }
 
 .content-shell {
@@ -432,6 +443,7 @@ body {
   .nav-item {
     padding: 0.55rem 0.65rem;
     min-width: 0;
+    align-items: flex-start;
   }
 
   .main-content {
@@ -442,6 +454,13 @@ body {
 
   .content-shell {
     min-height: auto;
+  }
+
+  .level-title {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.25;
   }
 }
 
@@ -454,6 +473,10 @@ body {
 
   .sidebar-logo {
     font-size: 1rem;
+  }
+
+  .sidebar {
+    padding-bottom: 0.5rem;
   }
 }
 </style> 
