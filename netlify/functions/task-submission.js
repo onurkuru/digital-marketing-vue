@@ -460,19 +460,12 @@ exports.handler = async (event) => {
     const taskId = sanitizeText(body.taskId, 40);
     const taskTitle = sanitizeText(body.taskTitle, 180);
     const levelId = sanitizeText(body.levelId, 20);
-    const captchaToken = sanitizeText(body.captchaToken, 2000);
-
     if (!fullName || !senderEmail || !subject || !details || !taskId || !taskTitle || !levelId) {
       return jsonResponse(400, { error: 'Zorunlu alanlar eksik.' });
     }
 
     if (!isValidEmail(senderEmail)) {
       return jsonResponse(400, { error: 'Geçerli bir e-posta girin.' });
-    }
-
-    const captchaOk = await verifyCaptcha(captchaToken, event.headers['x-forwarded-for']);
-    if (!captchaOk) {
-      return jsonResponse(400, { error: 'Captcha doğrulaması başarısız.' });
     }
 
     const attachments = normalizeAttachments(body.attachments);

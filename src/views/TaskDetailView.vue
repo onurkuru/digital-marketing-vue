@@ -59,13 +59,6 @@
     <div class="task-submission card">
       <h2>Görev Teslimi</h2>
 
-      <div class="submission-note">
-        <p>
-          Form üzerinden gönderilen teslimler spam korumalıdır ve sunucu tarafında işlenir.
-          Hedef e-posta adresi istemci kodunda görünmez.
-        </p>
-      </div>
-
       <div v-if="task.status === 'Tamamlandı'" class="submission-complete">
         <div class="success-icon">✓</div>
         <div class="success-message">
@@ -170,20 +163,6 @@
           <input id="websiteField" v-model="submissionForm.website" type="text" tabindex="-1" autocomplete="off" />
         </div>
 
-        <div class="captcha-block" v-if="captchaSiteKey">
-          <label>Spam Koruması</label>
-          <div ref="captchaContainer"></div>
-          <p class="error-text" v-if="captchaError">{{ captchaError }}</p>
-        </div>
-
-        <div class="info-text" v-else-if="runtimeCaptchaLoading">
-          Captcha yapılandırması kontrol ediliyor...
-        </div>
-
-        <div class="warning-text" v-else>
-          Captcha site anahtarı yapılandırılmadığı için form gönderimi kapalı.
-        </div>
-
         <p class="success-text" v-if="submitSuccessMessage">{{ submitSuccessMessage }}</p>
         <p class="error-text" v-if="submitErrorMessage">{{ submitErrorMessage }}</p>
 
@@ -262,14 +241,6 @@ export default {
         attachments: [],
         website: ''
       },
-      runtimeCaptchaConfig: {
-        provider: '',
-        siteKey: ''
-      },
-      runtimeCaptchaLoading: true,
-      captchaToken: '',
-      captchaError: '',
-      captchaWidgetId: null,
       isSubmitting: false,
       submitSuccessMessage: '',
       submitErrorMessage: ''
@@ -295,26 +266,7 @@ export default {
     acceptedFileTypes() {
       return ACCEPTED_FILE_TYPES.join(',');
     },
-    captchaProvider() {
-      if (import.meta.env.VITE_TURNSTILE_SITE_KEY) return 'turnstile';
-      if (import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_SITE_RECAPTCHA_KEY) return 'recaptcha';
-      if (this.runtimeCaptchaConfig.provider) return this.runtimeCaptchaConfig.provider;
-      return '';
-    },
-    captchaSiteKey() {
-      if (this.captchaProvider === 'turnstile') {
-        return import.meta.env.VITE_TURNSTILE_SITE_KEY || this.runtimeCaptchaConfig.siteKey || '';
-      }
-      if (this.captchaProvider === 'recaptcha') {
-        return import.meta.env.VITE_RECAPTCHA_SITE_KEY
-          || import.meta.env.VITE_SITE_RECAPTCHA_KEY
-          || this.runtimeCaptchaConfig.siteKey
-          || '';
-      }
-      return '';
-    },
     canSubmitDelivery() {
-      if (!this.captchaSiteKey) return false;
       const hasRequiredFields = Boolean(
         this.task &&
         this.submissionForm.fullName &&
@@ -323,7 +275,7 @@ export default {
         this.submissionForm.details
       );
       const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.submissionForm.senderEmail);
-      return hasRequiredFields && hasValidEmail && Boolean(this.captchaToken) && !this.isSubmitting;
+      return hasRequiredFields && hasValidEmail && !this.isSubmitting;
     }
   },
   watch: {
@@ -341,50 +293,10 @@ export default {
     if (typeof this.unsubscribeProgress === 'function') {
       this.unsubscribeProgress();
     }
-    this.resetCaptchaWidget();
   },
   methods: {
-    async initializeForm() {
+    initializeForm() {
       this.resetSubmissionForm();
-      this.runtimeCaptchaLoading = true;
-      await this.loadRuntimeCaptchaConfig();
-      this.runtimeCaptchaLoading = false;
-      this.renderCaptcha();
-    },
-    async loadRuntimeCaptchaConfig() {
-      if (import.meta.env.VITE_TURNSTILE_SITE_KEY || import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_SITE_RECAPTCHA_KEY) {
-        return;
-      }
-
-      const runtimeConfigEndpoints = [
-        '/api/runtime-config',
-        '/.netlify/functions/runtime-config',
-        '/api/task-submission?mode=config',
-        '/.netlify/functions/task-submission?mode=config'
-      ];
-
-      for (const endpoint of runtimeConfigEndpoints) {
-        try {
-          const response = await fetch(endpoint, {
-            method: 'GET',
-            headers: {
-              'Cache-Control': 'no-cache'
-            }
-          });
-          if (!response.ok) continue;
-
-          const data = await response.json();
-          const provider = String(data?.captcha?.provider || '').trim().toLowerCase();
-          const siteKey = String(data?.captcha?.siteKey || '').trim();
-          if (!provider || !siteKey) continue;
-          if (provider !== 'turnstile' && provider !== 'recaptcha') continue;
-
-          this.runtimeCaptchaConfig = { provider, siteKey };
-          return;
-        } catch (error) {
-          // no-op
-        }
-      }
     },
     getLevelTitle(levelId) {
       const level = this.levels.find((item) => item.id === String(levelId));
@@ -474,8 +386,6 @@ export default {
     resetSubmissionForm() {
       this.submitSuccessMessage = '';
       this.submitErrorMessage = '';
-      this.captchaError = '';
-      this.captchaToken = '';
       this.submissionNotes = '';
       this.submissionForm = {
         fullName: '',
@@ -485,127 +395,6 @@ export default {
         attachments: [],
         website: ''
       };
-      this.resetCaptchaWidget();
-    },
-    resetCaptchaWidget() {
-      if (typeof window === 'undefined' || this.captchaWidgetId === null) {
-        return;
-      }
-
-      if (this.captchaProvider === 'turnstile' && window.turnstile) {
-        try {
-          window.turnstile.remove(this.captchaWidgetId);
-        } catch (error) {
-          // no-op
-        }
-      } else if (this.captchaProvider === 'recaptcha' && window.grecaptcha) {
-        try {
-          window.grecaptcha.reset(this.captchaWidgetId);
-        } catch (error) {
-          // no-op
-        }
-      }
-
-      const container = this.$refs.captchaContainer;
-      if (container) {
-        container.innerHTML = '';
-      }
-      this.captchaWidgetId = null;
-    },
-    renderCaptchaWidget() {
-      if (!this.captchaSiteKey || typeof window === 'undefined') {
-        return;
-      }
-
-      this.$nextTick(() => {
-        const container = this.$refs.captchaContainer;
-        if (!container) return;
-
-        const render = () => {
-          this.resetCaptchaWidget();
-
-          if (this.captchaProvider === 'turnstile') {
-            if (!window.turnstile) return;
-            this.captchaWidgetId = window.turnstile.render(container, {
-              sitekey: this.captchaSiteKey,
-              callback: (token) => {
-                this.captchaToken = token;
-                this.captchaError = '';
-              },
-              'expired-callback': () => {
-                this.captchaToken = '';
-              },
-              'error-callback': () => {
-                this.captchaToken = '';
-                this.captchaError = 'Captcha doğrulaması başarısız. Lütfen tekrar deneyin.';
-              }
-            });
-            return;
-          }
-
-          if (this.captchaProvider === 'recaptcha') {
-            if (!window.grecaptcha || !window.grecaptcha.render) return;
-            this.captchaWidgetId = window.grecaptcha.render(container, {
-              sitekey: this.captchaSiteKey,
-              callback: (token) => {
-                this.captchaToken = token;
-                this.captchaError = '';
-              },
-              'expired-callback': () => {
-                this.captchaToken = '';
-              },
-              'error-callback': () => {
-                this.captchaToken = '';
-                this.captchaError = 'Captcha doğrulaması başarısız. Lütfen tekrar deneyin.';
-              }
-            });
-          }
-        };
-
-        if (
-          (this.captchaProvider === 'turnstile' && window.turnstile) ||
-          (this.captchaProvider === 'recaptcha' && window.grecaptcha && window.grecaptcha.render)
-        ) {
-          render();
-          return;
-        }
-
-        const scriptId = this.captchaProvider === 'turnstile'
-          ? 'cf-turnstile-script'
-          : 'google-recaptcha-script';
-        const scriptSrc = this.captchaProvider === 'turnstile'
-          ? 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-          : 'https://www.google.com/recaptcha/api.js?render=explicit';
-
-        const existingScript = document.getElementById(scriptId);
-        if (existingScript) {
-          existingScript.addEventListener('load', render, { once: true });
-          return;
-        }
-
-        const script = document.createElement('script');
-        script.id = scriptId;
-        script.src = scriptSrc;
-        script.async = true;
-        script.defer = true;
-        script.addEventListener('load', render, { once: true });
-        script.addEventListener('error', () => {
-          this.captchaError = 'Captcha script yüklenemedi.';
-        }, { once: true });
-        document.head.appendChild(script);
-      });
-    },
-    resetCaptcha() {
-      this.captchaToken = '';
-      if (typeof window === 'undefined' || this.captchaWidgetId === null) {
-        return;
-      }
-
-      if (this.captchaProvider === 'turnstile' && window.turnstile) {
-        window.turnstile.reset(this.captchaWidgetId);
-      } else if (this.captchaProvider === 'recaptcha' && window.grecaptcha) {
-        window.grecaptcha.reset(this.captchaWidgetId);
-      }
     },
     saveProgress() {
       if (!this.task) return;
@@ -614,7 +403,7 @@ export default {
     },
     async submitDelivery() {
       if (!this.task || !this.canSubmitDelivery) {
-        this.submitErrorMessage = 'Lütfen tüm zorunlu alanları doldurun ve captcha doğrulamasını tamamlayın.';
+        this.submitErrorMessage = 'Lütfen tüm zorunlu alanları doldurun.';
         return;
       }
 
@@ -633,7 +422,6 @@ export default {
         details: this.submissionForm.details,
         notes: this.submissionNotes,
         attachments: this.submissionForm.attachments,
-        captchaToken: this.captchaToken,
         website: this.submissionForm.website
       };
 
@@ -661,11 +449,7 @@ export default {
         this.submitErrorMessage = error.message || 'Teslim gönderilirken hata oluştu.';
       } finally {
         this.isSubmitting = false;
-        this.resetCaptcha();
       }
-    },
-    renderCaptcha() {
-      this.renderCaptchaWidget();
     }
   }
 };
@@ -851,15 +635,6 @@ h3 {
   color: #6c757d;
 }
 
-.submission-note {
-  padding: 0.9rem;
-  border-radius: 8px;
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  margin-bottom: 1rem;
-  color: #495057;
-}
-
 .submission-complete {
   display: flex;
   align-items: center;
@@ -963,28 +738,6 @@ textarea {
   left: -9999px;
   opacity: 0;
   pointer-events: none;
-}
-
-.captcha-block {
-  margin-bottom: 1rem;
-}
-
-.warning-text {
-  margin-bottom: 1rem;
-  border: 1px solid #ffeeba;
-  background: #fff3cd;
-  color: #856404;
-  border-radius: 8px;
-  padding: 0.75rem;
-}
-
-.info-text {
-  margin-bottom: 1rem;
-  border: 1px solid #cfe2ff;
-  background: #e7f1ff;
-  color: #084298;
-  border-radius: 8px;
-  padding: 0.75rem;
 }
 
 .success-text,

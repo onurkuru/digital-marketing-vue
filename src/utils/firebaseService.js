@@ -34,6 +34,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const shouldUseFirebaseAnonymousAuth = String(import.meta.env.VITE_ENABLE_FIREBASE_AUTH || '')
+  .trim()
+  .toLowerCase() === 'true';
 
 const LOCAL_FALLBACK_USER_KEY = 'fallbackUserId';
 
@@ -52,6 +55,10 @@ function getLocalFallbackUserId() {
 
 // Create or get user session
 const initUserSession = async () => {
+  if (!shouldUseFirebaseAnonymousAuth) {
+    return getLocalFallbackUserId();
+  }
+
   try {
     // Use anonymous auth to track a user session
     const { user } = await signInAnonymously(auth);
