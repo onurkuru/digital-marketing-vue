@@ -45,14 +45,15 @@ Hedef e-posta istemci kodunda tutulmaz, sadece Netlify ortam değişkeninde sakl
 
 Netlify > Site configuration > Environment variables alanına aşağıdaki anahtarları ekleyin:
 
-- `VITE_TURNSTILE_SITE_KEY` (Cloudflare Turnstile site key - istemci tarafı)
-- `TURNSTILE_SECRET_KEY` (Cloudflare Turnstile secret key - sunucu tarafı)
+- `VITE_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` (Cloudflare Turnstile) **veya**
+- `VITE_RECAPTCHA_SITE_KEY` + `SITE_RECAPTCHA_SECRET` (Google reCAPTCHA)
 - `NETLIFY_EMAILS_SECRET` (Netlify Email Integration secret)
 - `SUBMISSION_FROM_EMAIL` (mail gönderen adres)
 - `SUBMISSION_TO_EMAIL` (teslimlerin düşeceği gizli hedef adres)
 
 Opsiyonel (fallback için):
 
+- `CAPTCHA_PROVIDER` (`turnstile` veya `recaptcha`)
 - `EMAIL_PROVIDER` (`netlify`, `postmark` veya `resend`)
 - `POSTMARK_SERVER_TOKEN`
 - `POSTMARK_MESSAGE_STREAM` (`outbound` varsayılan)

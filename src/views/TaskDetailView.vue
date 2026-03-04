@@ -172,7 +172,7 @@
 
         <div class="captcha-block" v-if="captchaSiteKey">
           <label>Spam Koruması</label>
-          <div ref="turnstileContainer"></div>
+          <div ref="captchaContainer"></div>
           <p class="error-text" v-if="captchaError">{{ captchaError }}</p>
         </div>
 
@@ -258,10 +258,9 @@ export default {
         attachments: [],
         website: ''
       },
-      captchaSiteKey: import.meta.env.VITE_TURNSTILE_SITE_KEY || '',
       captchaToken: '',
       captchaError: '',
-      turnstileWidgetId: null,
+      captchaWidgetId: null,
       isSubmitting: false,
       submitSuccessMessage: '',
       submitErrorMessage: ''
@@ -287,6 +286,20 @@ export default {
     acceptedFileTypes() {
       return ACCEPTED_FILE_TYPES.join(',');
     },
+    captchaProvider() {
+      if (import.meta.env.VITE_TURNSTILE_SITE_KEY) return 'turnstile';
+      if (import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_SITE_RECAPTCHA_KEY) return 'recaptcha';
+      return '';
+    },
+    captchaSiteKey() {
+      if (this.captchaProvider === 'turnstile') {
+        return import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+      }
+      if (this.captchaProvider === 'recaptcha') {
+        return import.meta.env.VITE_RECAPTCHA_SITE_KEY || import.meta.env.VITE_SITE_RECAPTCHA_KEY || '';
+      }
+      return '';
+    },
     canSubmitDelivery() {
       if (!this.captchaSiteKey) return false;
       const hasRequiredFields = Boolean(
@@ -303,7 +316,7 @@ export default {
   watch: {
     id() {
       this.resetSubmissionForm();
-      this.renderTurnstile();
+      this.renderCaptcha();
     }
   },
   mounted() {
@@ -311,13 +324,13 @@ export default {
       this.progress = progress;
     });
     this.resetSubmissionForm();
-    this.renderTurnstile();
+    this.renderCaptcha();
   },
   beforeUnmount() {
     if (typeof this.unsubscribeProgress === 'function') {
       this.unsubscribeProgress();
     }
-    this.resetTurnstileWidget();
+    this.resetCaptchaWidget();
   },
   methods: {
     getLevelTitle(levelId) {
@@ -419,62 +432,107 @@ export default {
         attachments: [],
         website: ''
       };
-      this.resetTurnstileWidget();
+      this.resetCaptchaWidget();
     },
-    resetTurnstileWidget() {
-      if (typeof window === 'undefined' || !window.turnstile || this.turnstileWidgetId === null) {
+    resetCaptchaWidget() {
+      if (typeof window === 'undefined' || this.captchaWidgetId === null) {
         return;
       }
-      try {
-        window.turnstile.remove(this.turnstileWidgetId);
-      } catch (error) {
-        // no-op
-      } finally {
-        this.turnstileWidgetId = null;
+
+      if (this.captchaProvider === 'turnstile' && window.turnstile) {
+        try {
+          window.turnstile.remove(this.captchaWidgetId);
+        } catch (error) {
+          // no-op
+        }
+      } else if (this.captchaProvider === 'recaptcha' && window.grecaptcha) {
+        try {
+          window.grecaptcha.reset(this.captchaWidgetId);
+        } catch (error) {
+          // no-op
+        }
       }
+
+      const container = this.$refs.captchaContainer;
+      if (container) {
+        container.innerHTML = '';
+      }
+      this.captchaWidgetId = null;
     },
-    renderTurnstileWidget() {
+    renderCaptchaWidget() {
       if (!this.captchaSiteKey || typeof window === 'undefined') {
         return;
       }
 
       this.$nextTick(() => {
-        const container = this.$refs.turnstileContainer;
+        const container = this.$refs.captchaContainer;
         if (!container) return;
 
         const render = () => {
-          if (!window.turnstile) return;
-          this.resetTurnstileWidget();
-          this.turnstileWidgetId = window.turnstile.render(container, {
-            sitekey: this.captchaSiteKey,
-            callback: (token) => {
-              this.captchaToken = token;
-              this.captchaError = '';
-            },
-            'expired-callback': () => {
-              this.captchaToken = '';
-            },
-            'error-callback': () => {
-              this.captchaToken = '';
-              this.captchaError = 'Captcha doğrulaması başarısız. Lütfen tekrar deneyin.';
-            }
-          });
+          this.resetCaptchaWidget();
+
+          if (this.captchaProvider === 'turnstile') {
+            if (!window.turnstile) return;
+            this.captchaWidgetId = window.turnstile.render(container, {
+              sitekey: this.captchaSiteKey,
+              callback: (token) => {
+                this.captchaToken = token;
+                this.captchaError = '';
+              },
+              'expired-callback': () => {
+                this.captchaToken = '';
+              },
+              'error-callback': () => {
+                this.captchaToken = '';
+                this.captchaError = 'Captcha doğrulaması başarısız. Lütfen tekrar deneyin.';
+              }
+            });
+            return;
+          }
+
+          if (this.captchaProvider === 'recaptcha') {
+            if (!window.grecaptcha || !window.grecaptcha.render) return;
+            this.captchaWidgetId = window.grecaptcha.render(container, {
+              sitekey: this.captchaSiteKey,
+              callback: (token) => {
+                this.captchaToken = token;
+                this.captchaError = '';
+              },
+              'expired-callback': () => {
+                this.captchaToken = '';
+              },
+              'error-callback': () => {
+                this.captchaToken = '';
+                this.captchaError = 'Captcha doğrulaması başarısız. Lütfen tekrar deneyin.';
+              }
+            });
+          }
         };
 
-        if (window.turnstile) {
+        if (
+          (this.captchaProvider === 'turnstile' && window.turnstile) ||
+          (this.captchaProvider === 'recaptcha' && window.grecaptcha && window.grecaptcha.render)
+        ) {
           render();
           return;
         }
 
-        const existingScript = document.getElementById('cf-turnstile-script');
+        const scriptId = this.captchaProvider === 'turnstile'
+          ? 'cf-turnstile-script'
+          : 'google-recaptcha-script';
+        const scriptSrc = this.captchaProvider === 'turnstile'
+          ? 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+          : 'https://www.google.com/recaptcha/api.js?render=explicit';
+
+        const existingScript = document.getElementById(scriptId);
         if (existingScript) {
           existingScript.addEventListener('load', render, { once: true });
           return;
         }
 
         const script = document.createElement('script');
-        script.id = 'cf-turnstile-script';
-        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.id = scriptId;
+        script.src = scriptSrc;
         script.async = true;
         script.defer = true;
         script.addEventListener('load', render, { once: true });
@@ -486,8 +544,14 @@ export default {
     },
     resetCaptcha() {
       this.captchaToken = '';
-      if (typeof window !== 'undefined' && window.turnstile && this.turnstileWidgetId !== null) {
-        window.turnstile.reset(this.turnstileWidgetId);
+      if (typeof window === 'undefined' || this.captchaWidgetId === null) {
+        return;
+      }
+
+      if (this.captchaProvider === 'turnstile' && window.turnstile) {
+        window.turnstile.reset(this.captchaWidgetId);
+      } else if (this.captchaProvider === 'recaptcha' && window.grecaptcha) {
+        window.grecaptcha.reset(this.captchaWidgetId);
       }
     },
     saveProgress() {
@@ -547,8 +611,8 @@ export default {
         this.resetCaptcha();
       }
     },
-    renderTurnstile() {
-      this.renderTurnstileWidget();
+    renderCaptcha() {
+      this.renderCaptchaWidget();
     }
   }
 };

@@ -134,12 +134,7 @@ function normalizeAttachments(rawAttachments) {
   });
 }
 
-async function verifyTurnstile(token, remoteIp) {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) {
-    throw new AppError('Captcha yapılandırması eksik.', 500);
-  }
-
+async function verifyWithTurnstile(secret, token, remoteIp) {
   const params = new URLSearchParams();
   params.append('secret', secret);
   params.append('response', token || '');
@@ -161,6 +156,60 @@ async function verifyTurnstile(token, remoteIp) {
 
   const result = await response.json();
   return Boolean(result.success);
+}
+
+async function verifyWithRecaptcha(secret, token, remoteIp) {
+  const params = new URLSearchParams();
+  params.append('secret', secret);
+  params.append('response', token || '');
+  if (remoteIp) {
+    params.append('remoteip', remoteIp);
+  }
+
+  const response = await fetch('https://www.google.com/recaptcha/api/siteverify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: params.toString()
+  });
+
+  if (!response.ok) {
+    throw new AppError('reCAPTCHA servisine ulaşılamadı.', 502);
+  }
+
+  const result = await response.json();
+  return Boolean(result.success);
+}
+
+async function verifyCaptcha(token, remoteIp) {
+  const preferredProvider = sanitizeText(process.env.CAPTCHA_PROVIDER, 20).toLowerCase();
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY;
+  const recaptchaSecret = process.env.SITE_RECAPTCHA_SECRET || process.env.RECAPTCHA_SECRET_KEY;
+
+  if (preferredProvider === 'turnstile') {
+    if (!turnstileSecret) {
+      throw new AppError('TURNSTILE_SECRET_KEY eksik.', 500);
+    }
+    return verifyWithTurnstile(turnstileSecret, token, remoteIp);
+  }
+
+  if (preferredProvider === 'recaptcha') {
+    if (!recaptchaSecret) {
+      throw new AppError('SITE_RECAPTCHA_SECRET eksik.', 500);
+    }
+    return verifyWithRecaptcha(recaptchaSecret, token, remoteIp);
+  }
+
+  if (turnstileSecret) {
+    return verifyWithTurnstile(turnstileSecret, token, remoteIp);
+  }
+
+  if (recaptchaSecret) {
+    return verifyWithRecaptcha(recaptchaSecret, token, remoteIp);
+  }
+
+  throw new AppError('Captcha yapılandırması eksik.', 500);
 }
 
 async function sendViaResend(payload, options) {
@@ -387,7 +436,7 @@ exports.handler = async (event) => {
       return jsonResponse(400, { error: 'Geçerli bir e-posta girin.' });
     }
 
-    const captchaOk = await verifyTurnstile(captchaToken, event.headers['x-forwarded-for']);
+    const captchaOk = await verifyCaptcha(captchaToken, event.headers['x-forwarded-for']);
     if (!captchaOk) {
       return jsonResponse(400, { error: 'Captcha doğrulaması başarısız.' });
     }
