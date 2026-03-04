@@ -5,7 +5,7 @@
       <div class="sidebar-header">
         <div class="sidebar-logo">
           <span class="icon">📚</span>
-          <span>Dijital Pazarlama</span>
+          <span>InvestAZ Digital Pazarlama</span>
         </div>
       </div>
       
@@ -132,8 +132,7 @@ export default {
   },
   methods: {
     filterVisibleLevels() {
-      const unlockedLevel = Number(this.userProgress?.unlockedLevel || 1);
-      this.visibleLevels = this.levels.filter((level) => level.order <= unlockedLevel);
+      this.visibleLevels = this.levels;
     },
     getLevelIcon(order) {
       const icons = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'];

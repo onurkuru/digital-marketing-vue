@@ -1,5 +1,4 @@
 import { levels } from './marketingData/levels';
-import { tasksByLevel } from './marketingData/learning-content';
 
 const STORAGE_KEY = 'digital_marketing_learning_progress_v1';
 const PROGRESS_EVENT = 'learning-progress-updated';
@@ -9,7 +8,7 @@ function getDefaultProgress() {
     startedTasks: [],
     completedTasks: [],
     quizResults: {},
-    unlockedLevel: 1,
+    unlockedLevel: levels.length,
     updatedAt: new Date().toISOString()
   };
 }
@@ -19,41 +18,9 @@ function normalizeUniqueStringArray(value) {
   return [...new Set(value.map((item) => String(item)))];
 }
 
-function sortLevelsAscending() {
-  return [...levels].sort((a, b) => a.order - b.order);
-}
-
-function isPreviousLevelCompleted(progress, levelOrder) {
-  const previousOrder = levelOrder - 1;
-  if (previousOrder < 1) return true;
-
-  const previousLevelId = String(previousOrder);
-  const previousTasks = tasksByLevel[previousLevelId] || [];
-
-  const allTasksCompleted = previousTasks.every((task) =>
-    progress.completedTasks.includes(String(task.id))
-  );
-  const previousQuizScore = Number(progress.quizResults[previousLevelId] || 0);
-  const quizPassed = previousQuizScore >= 70;
-
-  return allTasksCompleted && quizPassed;
-}
-
-export function computeUnlockedLevel(progress) {
-  const orderedLevels = sortLevelsAscending();
-  let unlockedLevel = 1;
-
-  for (const level of orderedLevels) {
-    if (level.order === 1) continue;
-
-    if (isPreviousLevelCompleted(progress, level.order)) {
-      unlockedLevel = level.order;
-    } else {
-      break;
-    }
-  }
-
-  return unlockedLevel;
+export function computeUnlockedLevel() {
+  // Locking is intentionally disabled. All levels stay open.
+  return levels.length;
 }
 
 function normalizeProgress(progress) {
@@ -154,8 +121,9 @@ export function saveQuizResult(levelId, score) {
 }
 
 export function isLevelUnlocked(levelId, progress = loadProgress()) {
-  const levelNumber = Number(levelId);
-  return levelNumber <= Number(progress.unlockedLevel || 1);
+  void levelId;
+  void progress;
+  return true;
 }
 
 export function getTaskStatus(taskId, progress = loadProgress()) {

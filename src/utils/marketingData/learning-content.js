@@ -1359,13 +1359,31 @@ function buildExtendedQuestions(quiz) {
     id: `${quiz.id}-extra-${index + 1}`
   }));
 
-  return [...baseQuestions, ...deepDiveQuestions].slice(0, 20);
+  const combined = [...baseQuestions, ...deepDiveQuestions].slice(0, 20);
+  const levelSeed = Number(quiz.levelId || 1);
+  return combined.map((question, index) => shuffleQuestionOptions(question, levelSeed + index));
 }
 
 export const levelQuizzes = baseLevelQuizzes.map((quiz) => ({
   ...quiz,
   questions: buildExtendedQuestions(quiz)
 }));
+
+function shuffleQuestionOptions(question, seed) {
+  const options = Array.isArray(question.options) ? question.options : [];
+  if (options.length <= 1) return question;
+
+  const shift = seed % options.length;
+  const rotatedOptions = [...options.slice(shift), ...options.slice(0, shift)];
+  const oldCorrect = Number(question.correctOption || 0);
+  const newCorrect = (oldCorrect - shift + options.length) % options.length;
+
+  return {
+    ...question,
+    options: rotatedOptions,
+    correctOption: newCorrect
+  };
+}
 
 export const roadmapStages = levels.map((level) => ({
   id: `stage-${level.id}`,

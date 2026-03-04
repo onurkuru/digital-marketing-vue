@@ -4,7 +4,7 @@
       <div class="hero-content">
         <h1>Dijital Pazarlama Öğrenme Yolculuğu</h1>
         <p class="subtitle">
-          Seviye seviye ilerleyen eğitim akışı aktif. İlerlemen otomatik olarak tarayıcı önbelleğine kaydedilir.
+          Tüm seviyeler açık. İstediğin seviyeden başlayabilir, ilerlemeni tarayıcı önbelleğinde kaydedebilirsin.
         </p>
         <router-link to="/tasks" class="btn btn-primary">
           <span class="btn-icon">🚀</span>
@@ -55,7 +55,7 @@
         <div class="stats-card">
           <div class="stats-icon">📝</div>
           <div class="stats-content">
-            <div class="stats-value">Adımlı İlerleme</div>
+            <div class="stats-value">Serbest Erişim</div>
             <div class="stats-title">İlerleme Modu</div>
           </div>
         </div>
