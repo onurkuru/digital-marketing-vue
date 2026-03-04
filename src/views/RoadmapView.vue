@@ -111,215 +111,14 @@
 </template>
 
 <script>
+import { roadmapStages, roadmapModules } from '@/utils/marketingData/learning-content';
+
 export default {
   name: 'RoadmapView',
   data() {
     return {
-      stages: [
-        {
-          id: 'stage-1',
-          title: 'Dijital Pazarlama Temelleri',
-          description: 'Dijital pazarlamanın temel kavramlarını, terminolojisini ve stratejik yaklaşımları öğrenin.'
-        },
-        {
-          id: 'stage-2',
-          title: 'SEO ve İçerik Stratejisi',
-          description: 'Arama motoru optimizasyonu ve içerik pazarlaması stratejileri hakkında derinlemesine bilgi edinin.'
-        },
-        {
-          id: 'stage-3',
-          title: 'Sosyal Medya Pazarlaması',
-          description: 'Sosyal medya platformlarını etkili bir şekilde kullanmayı ve sosyal medya pazarlama stratejileri geliştirmeyi öğrenin.'
-        },
-        {
-          id: 'stage-4',
-          title: 'İçerik Pazarlaması',
-          description: 'Etkili içerik stratejileri geliştirmeyi ve farklı formatlarda içerik oluşturmayı öğrenin.'
-        },
-        {
-          id: 'stage-5',
-          title: 'E-posta Pazarlaması',
-          description: 'E-posta pazarlaması stratejileri, liste oluşturma ve otomatik e-posta kampanyaları oluşturmayı öğrenin.'
-        },
-        {
-          id: 'stage-6',
-          title: 'Ücretli Reklamcılık',
-          description: 'Google Ads, sosyal medya reklamları ve diğer ücretli reklam modelleri hakkında pratik bilgiler edinin.'
-        },
-        {
-          id: 'stage-7',
-          title: 'Veri Analizi ve Raporlama',
-          description: 'Dijital pazarlama verilerini analiz etme, ölçme ve raporlama tekniklerini öğrenin.'
-        }
-      ],
-      modules: [
-        {
-          id: 'module-101',
-          stageId: 'stage-1',
-          title: 'Dijital Pazarlamaya Giriş',
-          description: 'Dijital pazarlamanın temel kavramlarını, tarihçesini ve geleneksel pazarlamadan farkını öğrenin.',
-          type: 'learning',
-          status: 'completed',
-          difficulty: 'easy',
-          duration: 45,
-          taskCount: 3,
-          completedAt: '2023-08-05',
-          isRequired: true
-        },
-        {
-          id: 'module-102',
-          stageId: 'stage-1',
-          title: 'Dijital Pazarlama Terminolojisi',
-          description: 'Dijital pazarlamada sıkça kullanılan terimler ve kavramlar hakkında kapsamlı bilgi edinin.',
-          type: 'learning',
-          status: 'completed',
-          difficulty: 'easy',
-          duration: 30,
-          taskCount: 2,
-          completedAt: '2023-08-08',
-          isRequired: true
-        },
-        {
-          id: 'module-103',
-          stageId: 'stage-1',
-          title: 'Hedef Kitle Analizi',
-          description: 'Hedef kitlenizi tanımlama, segmente etme ve persona oluşturma tekniklerini öğrenin.',
-          type: 'activity',
-          status: 'in-progress',
-          difficulty: 'medium',
-          duration: 60,
-          taskCount: 4,
-          isRequired: true
-        },
-        {
-          id: 'module-104',
-          stageId: 'stage-1',
-          title: 'Dijital Pazarlama Stratejisi Geliştirme',
-          description: 'Markanız için kapsamlı bir dijital pazarlama stratejisi geliştirme adımlarını öğrenin.',
-          type: 'project',
-          status: 'not-started',
-          difficulty: 'hard',
-          duration: 90,
-          taskCount: 5,
-          isRequired: true
-        },
-        {
-          id: 'module-105',
-          stageId: 'stage-1',
-          title: 'Dijital Pazarlama Araçları',
-          description: 'Dijital pazarlamada kullanılan önemli araçlar ve platformlar hakkında bilgi edinin.',
-          type: 'learning',
-          status: 'not-started',
-          difficulty: 'medium',
-          duration: 45,
-          taskCount: 3,
-          isRequired: false
-        },
-        {
-          id: 'module-201',
-          stageId: 'stage-2',
-          title: 'SEO Temelleri',
-          description: 'Arama motoru optimizasyonunun temel prensipler ve tekniklerini öğrenin.',
-          type: 'learning',
-          status: 'locked',
-          difficulty: 'medium',
-          duration: 60,
-          taskCount: 4,
-          prerequisiteModules: ['module-104'],
-          isRequired: true
-        },
-        {
-          id: 'module-202',
-          stageId: 'stage-2',
-          title: 'İçerik Pazarlaması Stratejileri',
-          description: 'Etkili içerik pazarlaması stratejileri geliştirme ve uygulama tekniklerini öğrenin.',
-          type: 'learning',
-          status: 'locked',
-          difficulty: 'medium',
-          duration: 50,
-          taskCount: 3,
-          prerequisiteModules: ['module-104'],
-          isRequired: true
-        },
-        {
-          id: 'module-301',
-          stageId: 'stage-3',
-          title: 'Sosyal Medya Pazarlamasına Giriş',
-          description: 'Sosyal medya pazarlamasının temellerini ve farklı platformların özelliklerini öğrenin.',
-          type: 'learning',
-          status: 'locked',
-          difficulty: 'medium',
-          duration: 55,
-          taskCount: 4,
-          prerequisiteStages: ['stage-2'],
-          isRequired: true
-        },
-        {
-          id: 'module-501',
-          stageId: 'stage-5',
-          title: 'E-posta Pazarlamasına Giriş',
-          description: 'E-posta pazarlamasının temellerini, önemini ve başarılı e-posta kampanyalarının bileşenlerini öğrenin.',
-          type: 'learning',
-          status: 'not-started',
-          difficulty: 'medium',
-          duration: 120,
-          taskCount: 3,
-          prerequisiteStages: ['stage-4'],
-          isRequired: true
-        },
-        {
-          id: 'module-502',
-          stageId: 'stage-5',
-          title: 'E-posta Listesi Oluşturma ve Segmentasyon',
-          description: 'Kaliteli bir e-posta listesi oluşturma, büyütme ve etkili segmentasyon stratejileri geliştirme konularını öğrenin.',
-          type: 'activity',
-          status: 'locked',
-          difficulty: 'medium',
-          duration: 180,
-          taskCount: 3,
-          prerequisiteModules: ['module-501'],
-          isRequired: true
-        },
-        {
-          id: 'module-503',
-          stageId: 'stage-5',
-          title: 'E-posta Tasarımı ve İçerik Oluşturma',
-          description: 'Etkili e-posta tasarımı ve içerik oluşturma tekniklerini öğrenin.',
-          type: 'activity',
-          status: 'locked',
-          difficulty: 'medium',
-          duration: 210,
-          taskCount: 3,
-          prerequisiteModules: ['module-501', 'module-502'],
-          isRequired: true
-        },
-        {
-          id: 'module-504',
-          stageId: 'stage-5',
-          title: 'E-posta Otomasyonu',
-          description: 'E-posta otomasyonunun temellerini ve müşteri yolculuğuna göre otomasyon akışları oluşturmayı öğrenin.',
-          type: 'project',
-          status: 'locked',
-          difficulty: 'hard',
-          duration: 240,
-          taskCount: 3,
-          prerequisiteModules: ['module-501', 'module-502', 'module-503'],
-          isRequired: true
-        },
-        {
-          id: 'module-505',
-          stageId: 'stage-5',
-          title: 'E-posta Analizi ve Optimizasyon',
-          description: 'E-posta kampanyalarının performansını analiz etme ve optimizasyon stratejileri geliştirme konularını öğrenin.',
-          type: 'project',
-          status: 'locked',
-          difficulty: 'hard',
-          duration: 180,
-          taskCount: 3,
-          prerequisiteModules: ['module-501', 'module-502', 'module-503', 'module-504'],
-          isRequired: true
-        }
-      ]
+      stages: roadmapStages,
+      modules: roadmapModules.map((module) => ({ ...module }))
     }
   },
   computed: {
@@ -339,11 +138,17 @@ export default {
     },
     getStageProgress(stageId) {
       const stageModules = this.getModulesByStage(stageId);
+      if (!stageModules.length) {
+        return '0/0 tamamlandı';
+      }
       const completedModules = stageModules.filter(m => m.status === 'completed').length;
       return `${completedModules}/${stageModules.length} tamamlandı`;
     },
     getStageStatusClass(stageId) {
       const stageModules = this.getModulesByStage(stageId);
+      if (!stageModules.length) {
+        return 'status-not-started';
+      }
       const completedCount = stageModules.filter(m => m.status === 'completed').length;
       const inProgressCount = stageModules.filter(m => m.status === 'in-progress').length;
       
@@ -433,20 +238,7 @@ export default {
       this.$router.push({ name: 'level', params: { id: levelId }});
     },
     getModuleLockedMessage(module) {
-      if (module.prerequisiteModules) {
-        const prerequisiteNames = module.prerequisiteModules.map(id => {
-          const prereq = this.modules.find(m => m.id === id);
-          return prereq ? prereq.title : id;
-        });
-        return `Önce şunları tamamlamalısınız: ${prerequisiteNames.join(', ')}`;
-      } else if (module.prerequisiteStages) {
-        const stageNames = module.prerequisiteStages.map(id => {
-          const stage = this.stages.find(s => s.id === id);
-          return stage ? stage.title : id;
-        });
-        return `Önce şu aşamaları tamamlamalısınız: ${stageNames.join(', ')}`;
-      }
-      return 'Bu modülü başlatmak için önceki modülleri tamamlayın.';
+      return module.lockReason || 'Bu modül şu anda kullanılamıyor.';
     }
   }
 }

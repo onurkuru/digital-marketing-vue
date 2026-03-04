@@ -78,13 +78,16 @@
         <div class="loading-spinner"></div>
         <p>Yükleniyor...</p>
       </div>
-      <router-view v-else />
+      <div v-else class="content-shell">
+        <router-view />
+        <footer class="app-footer">© ONUR KURU</footer>
+      </div>
     </main>
   </div>
 </template>
 
 <script>
-import { initUserSession, importLevel5Tasks } from './utils/firebaseService';
+import { initUserSession } from './utils/firebaseService';
 import { levels } from './utils/marketingData/levels';
 
 export default {
@@ -95,34 +98,24 @@ export default {
       userId: null,
       userProgress: null,
       levels: levels,
-      visibleLevels: []
+      visibleLevels: levels
     };
   },
   async created() {
-    // Initialize session and get user data
+    this.userProgress = {
+      completedTasks: [],
+      completedQuizzes: [],
+      earnedAchievements: [],
+      currentLevel: 1,
+      totalPoints: 0
+    };
+    this.filterVisibleLevels();
+
     try {
-      // Initialize Firebase user session
       this.userId = await initUserSession();
       
       if (this.userId) {
-        // Store user ID in localStorage for other components
         localStorage.setItem('userId', this.userId);
-        
-        // Import Level 5 tasks to Firebase if they don't exist
-        await importLevel5Tasks();
-        
-        // In a real app, you would fetch the user's progress from Firebase
-        // For now, we'll use a default progress object
-        this.userProgress = {
-          completedTasks: [],
-          completedQuizzes: [],
-          earnedAchievements: [],
-          currentLevel: 1,
-          totalPoints: 0
-        };
-        
-        // Filter levels based on user progress and requirements
-        this.filterVisibleLevels();
       }
     } catch (error) {
       console.error('Error initializing app:', error);
@@ -132,9 +125,8 @@ export default {
   },
   methods: {
     filterVisibleLevels() {
-      // For now, show first 5 levels by default
-      // In a real app, you would check user progress and level requirements
-      this.visibleLevels = this.levels.filter(level => level.order <= 5);
+      // First login starts from scratch but with full access to all levels.
+      this.visibleLevels = this.levels;
     },
     getLevelIcon(order) {
       const icons = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'];
@@ -241,6 +233,26 @@ body {
   padding: 1.5rem;
   max-width: calc(100% - 250px);
   position: relative;
+  min-height: 100vh;
+}
+
+.content-shell {
+  min-height: calc(100vh - 3rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.content-shell > *:first-child {
+  flex: 1;
+}
+
+.app-footer {
+  margin-top: 1.5rem;
+  padding: 1rem 0;
+  text-align: center;
+  color: #6c757d;
+  border-top: 1px solid #e9ecef;
+  font-weight: 500;
 }
 
 /* Loading Overlay */
