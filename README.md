@@ -37,6 +37,19 @@ Bu proje Netlify için `netlify.toml` ile hazırdır.
 3. Publish dizini olarak `dist` seçin.
 4. Deploy edin.
 
+### Görev Teslim Formu (Captcha + Güvenli E-posta)
+
+Görev teslimi formu `/.netlify/functions/task-submission` fonksiyonuna gider.
+Hedef e-posta istemci kodunda tutulmaz, sadece Netlify ortam değişkeninde saklanır.
+
+Netlify > Site configuration > Environment variables alanına aşağıdaki anahtarları ekleyin:
+
+- `VITE_TURNSTILE_SITE_KEY` (Cloudflare Turnstile site key - istemci tarafı)
+- `TURNSTILE_SECRET_KEY` (Cloudflare Turnstile secret key - sunucu tarafı)
+- `RESEND_API_KEY` (Resend API anahtarı)
+- `SUBMISSION_FROM_EMAIL` (mail gönderen adres)
+- `SUBMISSION_TO_EMAIL` (teslimlerin düşeceği gizli hedef adres)
+
 ## Kullanılan Teknolojiler
 
 - Vue.js

@@ -51,7 +51,7 @@
             <div class="resource-title">{{ resource.title }}</div>
             <div class="resource-description" v-if="resource.description">{{ resource.description }}</div>
           </div>
-          <a :href="resource.url || '#'" target="_blank" class="btn btn-outline">Görüntüle</a>
+          <a :href="resource.url || '#'" target="_blank" rel="noopener noreferrer" class="btn btn-outline">Görüntüle</a>
         </div>
       </div>
     </div>
@@ -59,38 +59,137 @@
     <div class="task-submission card">
       <h2>Görev Teslimi</h2>
 
-      <div class="email-delivery">
-        <h3>E-posta ile Teslim</h3>
+      <div class="submission-note">
         <p>
-          Görevi tamamladıktan sonra yöneticinize e-posta gönderin. Konu ve içerik otomatik hazırlanır.
+          Form üzerinden gönderilen teslimler spam korumalıdır ve sunucu tarafında işlenir.
+          Hedef e-posta adresi istemci kodunda görünmez.
         </p>
-        <a :href="submissionEmailLink" class="btn btn-outline">Yöneticiye E-posta Gönder</a>
       </div>
 
       <div v-if="task.status === 'Tamamlandı'" class="submission-complete">
         <div class="success-icon">✓</div>
         <div class="success-message">
-          <h3>Tebrikler! Bu görevi tamamladınız.</h3>
+          <h3>Bu görev tamamlandı.</h3>
           <p>{{ completedDateText }} tarihinde tamamlandı</p>
         </div>
       </div>
 
-      <div v-else class="submission-form">
+      <form class="submission-form" @submit.prevent="submitDelivery">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="fullName">Ad Soyad</label>
+            <input
+              id="fullName"
+              v-model.trim="submissionForm.fullName"
+              type="text"
+              maxlength="120"
+              autocomplete="name"
+              placeholder="Ad Soyad"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="senderEmail">Kurumsal E-posta</label>
+            <input
+              id="senderEmail"
+              v-model.trim="submissionForm.senderEmail"
+              type="email"
+              maxlength="180"
+              autocomplete="email"
+              placeholder="ornek@firma.com"
+              required
+            />
+          </div>
+        </div>
+
         <div class="form-group">
-          <label for="taskNotes">Görev Notları</label>
+          <label for="deliverySubject">Konu</label>
+          <input
+            id="deliverySubject"
+            v-model.trim="submissionForm.subject"
+            type="text"
+            maxlength="180"
+            placeholder="Görev teslim konusu"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="deliveryDetails">Teslim Detayı</label>
           <textarea
-            id="taskNotes"
-            v-model="submissionNotes"
-            rows="4"
-            placeholder="Görevle ilgili notlarınızı buraya yazın..."
+            id="deliveryDetails"
+            v-model.trim="submissionForm.details"
+            rows="6"
+            maxlength="6000"
+            placeholder="Görev kapsamında ne yaptığınızı, sonuçları ve bağlantıları yazın..."
+            required
           ></textarea>
         </div>
 
-        <div class="form-actions">
-          <button @click="saveProgress" class="btn btn-secondary">İlerlemeyi Kaydet</button>
-          <button @click="completeTask" class="btn btn-primary">Görevi Tamamla</button>
+        <div class="form-group">
+          <label for="taskNotes">Ek Notlar (Opsiyonel)</label>
+          <textarea
+            id="taskNotes"
+            v-model.trim="submissionNotes"
+            rows="3"
+            maxlength="4000"
+            placeholder="Ek notlarınızı buraya yazabilirsiniz..."
+          ></textarea>
         </div>
-      </div>
+
+        <div class="form-group">
+          <label for="attachments">Görev Dosyaları</label>
+          <input
+            id="attachments"
+            class="file-input"
+            type="file"
+            multiple
+            :accept="acceptedFileTypes"
+            @change="handleFileSelection"
+          />
+          <p class="field-help">En fazla 3 dosya, dosya başına maksimum 2 MB.</p>
+
+          <div v-if="submissionForm.attachments.length" class="attachment-list">
+            <div
+              v-for="(attachment, index) in submissionForm.attachments"
+              :key="`${attachment.name}-${index}`"
+              class="attachment-item"
+            >
+              <div class="attachment-meta">
+                <strong>{{ attachment.name }}</strong>
+                <span>{{ formatFileSize(attachment.size) }}</span>
+              </div>
+              <button type="button" class="btn-link" @click="removeAttachment(index)">Kaldır</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="honeypot-field" aria-hidden="true">
+          <label for="websiteField">Website</label>
+          <input id="websiteField" v-model="submissionForm.website" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+
+        <div class="captcha-block" v-if="captchaSiteKey">
+          <label>Spam Koruması</label>
+          <div ref="turnstileContainer"></div>
+          <p class="error-text" v-if="captchaError">{{ captchaError }}</p>
+        </div>
+
+        <div class="warning-text" v-else>
+          Captcha site anahtarı yapılandırılmadığı için form gönderimi kapalı.
+        </div>
+
+        <p class="success-text" v-if="submitSuccessMessage">{{ submitSuccessMessage }}</p>
+        <p class="error-text" v-if="submitErrorMessage">{{ submitErrorMessage }}</p>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" @click="saveProgress">İlerlemeyi Kaydet</button>
+          <button type="submit" class="btn btn-primary" :disabled="!canSubmitDelivery || isSubmitting">
+            {{ isSubmitting ? 'Gönderiliyor...' : 'Teslimi Gönder' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -109,7 +208,31 @@
 <script>
 import { levels } from '@/utils/marketingData/levels';
 import { allTasks } from '@/utils/marketingData/learning-content';
-import { getTaskStatus, isLevelUnlocked, loadProgress, markTaskCompleted, markTaskStarted, subscribeProgress } from '@/utils/progressStore';
+import {
+  getTaskStatus,
+  isLevelUnlocked,
+  loadProgress,
+  markTaskCompleted,
+  markTaskStarted,
+  subscribeProgress
+} from '@/utils/progressStore';
+
+const MAX_FILE_COUNT = 3;
+const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
+const ACCEPTED_FILE_TYPES = [
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.ppt',
+  '.pptx',
+  '.xls',
+  '.xlsx',
+  '.zip',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.txt'
+];
 
 export default {
   name: 'TaskDetailView',
@@ -127,7 +250,21 @@ export default {
       tasks: allTasks,
       progress: loadProgress(),
       unsubscribeProgress: null,
-      managerEmail: import.meta.env.VITE_MANAGER_EMAIL || 'yonetici@example.com'
+      submissionForm: {
+        fullName: '',
+        senderEmail: '',
+        subject: '',
+        details: '',
+        attachments: [],
+        website: ''
+      },
+      captchaSiteKey: import.meta.env.VITE_TURNSTILE_SITE_KEY || '',
+      captchaToken: '',
+      captchaError: '',
+      turnstileWidgetId: null,
+      isSubmitting: false,
+      submitSuccessMessage: '',
+      submitErrorMessage: ''
     };
   },
   computed: {
@@ -147,35 +284,40 @@ export default {
       if (!this.completedAt) return 'Bugün';
       return this.completedAt;
     },
-    submissionEmailLink() {
-      if (!this.task) return '#';
-      const subject = `Görev Teslimi - ${this.task.title}`;
-      const body = [
-        `Merhaba,`,
-        ``,
-        `${this.task.title} görevini tamamladım.`,
-        ``,
-        `Notlar:`,
-        `${this.submissionNotes || 'Not eklenmedi.'}`,
-        ``,
-        `Görev ID: ${this.task.id}`,
-        `Seviye: ${this.task.levelId}`,
-        ``,
-        `Teşekkürler.`
-      ].join('\n');
-
-      return `mailto:${this.managerEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    acceptedFileTypes() {
+      return ACCEPTED_FILE_TYPES.join(',');
+    },
+    canSubmitDelivery() {
+      if (!this.captchaSiteKey) return false;
+      const hasRequiredFields = Boolean(
+        this.task &&
+        this.submissionForm.fullName &&
+        this.submissionForm.senderEmail &&
+        this.submissionForm.subject &&
+        this.submissionForm.details
+      );
+      const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.submissionForm.senderEmail);
+      return hasRequiredFields && hasValidEmail && Boolean(this.captchaToken) && !this.isSubmitting;
+    }
+  },
+  watch: {
+    id() {
+      this.resetSubmissionForm();
+      this.renderTurnstile();
     }
   },
   mounted() {
     this.unsubscribeProgress = subscribeProgress((progress) => {
       this.progress = progress;
     });
+    this.resetSubmissionForm();
+    this.renderTurnstile();
   },
   beforeUnmount() {
     if (typeof this.unsubscribeProgress === 'function') {
       this.unsubscribeProgress();
     }
+    this.resetTurnstileWidget();
   },
   methods: {
     getLevelTitle(levelId) {
@@ -204,17 +346,209 @@ export default {
           return '📚';
       }
     },
+    formatFileSize(bytes) {
+      if (!bytes) return '0 B';
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / 1048576).toFixed(1)} MB`;
+    },
+    async readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = String(reader.result || '');
+          resolve(result.split(',').pop() || '');
+        };
+        reader.onerror = () => reject(new Error(`"${file.name}" dosyası okunamadı.`));
+        reader.readAsDataURL(file);
+      });
+    },
+    async handleFileSelection(event) {
+      const selectedFiles = Array.from(event.target.files || []);
+      this.submitErrorMessage = '';
+      this.submitSuccessMessage = '';
+
+      if (!selectedFiles.length) return;
+
+      if (selectedFiles.length > MAX_FILE_COUNT) {
+        this.submitErrorMessage = `En fazla ${MAX_FILE_COUNT} dosya yükleyebilirsiniz.`;
+        event.target.value = '';
+        return;
+      }
+
+      const attachments = [];
+      for (const file of selectedFiles) {
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+          this.submitErrorMessage = `"${file.name}" dosyası 2 MB sınırını aşıyor.`;
+          event.target.value = '';
+          return;
+        }
+
+        try {
+          const base64Content = await this.readFileAsBase64(file);
+          attachments.push({
+            name: file.name,
+            type: file.type || 'application/octet-stream',
+            size: file.size,
+            content: base64Content
+          });
+        } catch (error) {
+          this.submitErrorMessage = error.message || 'Dosya yüklenirken hata oluştu.';
+          event.target.value = '';
+          return;
+        }
+      }
+
+      this.submissionForm.attachments = attachments;
+      event.target.value = '';
+    },
+    removeAttachment(index) {
+      this.submissionForm.attachments.splice(index, 1);
+    },
+    resetSubmissionForm() {
+      this.submitSuccessMessage = '';
+      this.submitErrorMessage = '';
+      this.captchaError = '';
+      this.captchaToken = '';
+      this.submissionNotes = '';
+      this.submissionForm = {
+        fullName: '',
+        senderEmail: '',
+        subject: this.task ? `Görev Teslimi - ${this.task.title}` : '',
+        details: '',
+        attachments: [],
+        website: ''
+      };
+      this.resetTurnstileWidget();
+    },
+    resetTurnstileWidget() {
+      if (typeof window === 'undefined' || !window.turnstile || this.turnstileWidgetId === null) {
+        return;
+      }
+      try {
+        window.turnstile.remove(this.turnstileWidgetId);
+      } catch (error) {
+        // no-op
+      } finally {
+        this.turnstileWidgetId = null;
+      }
+    },
+    renderTurnstileWidget() {
+      if (!this.captchaSiteKey || typeof window === 'undefined') {
+        return;
+      }
+
+      this.$nextTick(() => {
+        const container = this.$refs.turnstileContainer;
+        if (!container) return;
+
+        const render = () => {
+          if (!window.turnstile) return;
+          this.resetTurnstileWidget();
+          this.turnstileWidgetId = window.turnstile.render(container, {
+            sitekey: this.captchaSiteKey,
+            callback: (token) => {
+              this.captchaToken = token;
+              this.captchaError = '';
+            },
+            'expired-callback': () => {
+              this.captchaToken = '';
+            },
+            'error-callback': () => {
+              this.captchaToken = '';
+              this.captchaError = 'Captcha doğrulaması başarısız. Lütfen tekrar deneyin.';
+            }
+          });
+        };
+
+        if (window.turnstile) {
+          render();
+          return;
+        }
+
+        const existingScript = document.getElementById('cf-turnstile-script');
+        if (existingScript) {
+          existingScript.addEventListener('load', render, { once: true });
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.id = 'cf-turnstile-script';
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.defer = true;
+        script.addEventListener('load', render, { once: true });
+        script.addEventListener('error', () => {
+          this.captchaError = 'Captcha script yüklenemedi.';
+        }, { once: true });
+        document.head.appendChild(script);
+      });
+    },
+    resetCaptcha() {
+      this.captchaToken = '';
+      if (typeof window !== 'undefined' && window.turnstile && this.turnstileWidgetId !== null) {
+        window.turnstile.reset(this.turnstileWidgetId);
+      }
+    },
     saveProgress() {
       if (!this.task) return;
       markTaskStarted(this.id);
-      alert('İlerlemeniz kaydedildi!');
+      alert('İlerlemeniz kaydedildi.');
     },
-    completeTask() {
-      if (!this.task) return;
-      markTaskCompleted(this.id);
-      this.completedAt = new Date().toLocaleDateString('tr-TR');
-      alert('Tebrikler! Görev tamamlandı.');
-      this.$router.push(`/level/${this.task.levelId}`);
+    async submitDelivery() {
+      if (!this.task || !this.canSubmitDelivery) {
+        this.submitErrorMessage = 'Lütfen tüm zorunlu alanları doldurun ve captcha doğrulamasını tamamlayın.';
+        return;
+      }
+
+      this.isSubmitting = true;
+      this.submitSuccessMessage = '';
+      this.submitErrorMessage = '';
+      markTaskStarted(this.id);
+
+      const payload = {
+        taskId: this.task.id,
+        taskTitle: this.task.title,
+        levelId: this.task.levelId,
+        fullName: this.submissionForm.fullName,
+        senderEmail: this.submissionForm.senderEmail,
+        subject: this.submissionForm.subject,
+        details: this.submissionForm.details,
+        notes: this.submissionNotes,
+        attachments: this.submissionForm.attachments,
+        captchaToken: this.captchaToken,
+        website: this.submissionForm.website
+      };
+
+      try {
+        const response = await fetch('/api/task-submission', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(result.error || 'Teslim gönderilemedi.');
+        }
+
+        markTaskCompleted(this.id);
+        this.completedAt = new Date().toLocaleDateString('tr-TR');
+        this.submitSuccessMessage = 'Teslim başarıyla gönderildi. Görev tamamlandı olarak işaretlendi.';
+        this.submissionForm.details = '';
+        this.submissionForm.attachments = [];
+        this.submissionNotes = '';
+      } catch (error) {
+        this.submitErrorMessage = error.message || 'Teslim gönderilirken hata oluştu.';
+      } finally {
+        this.isSubmitting = false;
+        this.resetCaptcha();
+      }
+    },
+    renderTurnstile() {
+      this.renderTurnstileWidget();
     }
   }
 };
@@ -400,27 +734,20 @@ h3 {
   color: #6c757d;
 }
 
+.submission-note {
+  padding: 0.9rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  margin-bottom: 1rem;
+  color: #495057;
+}
+
 .submission-complete {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-.email-delivery {
-  padding: 1rem;
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
   margin-bottom: 1rem;
-}
-
-.email-delivery h3 {
-  margin-bottom: 0.5rem;
-}
-
-.email-delivery p {
-  color: #6c757d;
-  margin-bottom: 0.75rem;
 }
 
 .success-icon {
@@ -435,19 +762,123 @@ h3 {
   font-weight: 700;
 }
 
+.submission-form {
+  margin-top: 0.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.45rem;
   margin-bottom: 1rem;
 }
 
+.form-group label {
+  font-weight: 500;
+}
+
+input,
 textarea {
   width: 100%;
   border: 1px solid #ced4da;
   border-radius: 8px;
   padding: 0.75rem;
+  font: inherit;
+}
+
+textarea {
   resize: vertical;
+}
+
+.file-input {
+  padding: 0.45rem;
+}
+
+.field-help {
+  margin-top: -0.2rem;
+  color: #6c757d;
+  font-size: 0.82rem;
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+.attachment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+}
+
+.attachment-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.attachment-meta span {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.btn-link {
+  border: none;
+  background: none;
+  color: #dc3545;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.honeypot-field {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.captcha-block {
+  margin-bottom: 1rem;
+}
+
+.warning-text {
+  margin-bottom: 1rem;
+  border: 1px solid #ffeeba;
+  background: #fff3cd;
+  color: #856404;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.success-text,
+.error-text {
+  margin-bottom: 0.8rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.success-text {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.error-text {
+  background: #f8d7da;
+  color: #842029;
+  border: 1px solid #f5c2c7;
 }
 
 .form-actions {
@@ -463,6 +894,11 @@ textarea {
   font-weight: 500;
   border: 1px solid transparent;
   cursor: pointer;
+}
+
+.btn[disabled] {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -486,6 +922,10 @@ textarea {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 
   .form-actions {
