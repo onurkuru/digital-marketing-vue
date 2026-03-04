@@ -1,7 +1,20 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" :class="{ 'menu-open': isMobileMenuOpen }">
+    <button
+      v-if="isMobileMenuOpen && isMobileViewport"
+      type="button"
+      class="sidebar-backdrop"
+      aria-label="Menüyü kapat"
+      @click="closeMobileMenu"
+    ></button>
+
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside
+      id="app-sidebar"
+      class="sidebar"
+      :class="{ 'mobile-open': isMobileMenuOpen }"
+      @click="handleSidebarClick"
+    >
       <div class="sidebar-header">
         <div class="sidebar-logo">
           <span class="icon">📚</span>
@@ -74,6 +87,19 @@
     
     <!-- Main Content -->
     <main class="main-content">
+      <div class="mobile-topbar">
+        <button
+          type="button"
+          class="mobile-menu-button"
+          aria-controls="app-sidebar"
+          :aria-expanded="isMobileMenuOpen ? 'true' : 'false'"
+          @click="toggleMobileMenu"
+        >
+          <span class="mobile-menu-icon" aria-hidden="true">☰</span>
+          <span>Menü</span>
+        </button>
+      </div>
+
       <div v-if="loading" class="loading-overlay">
         <div class="loading-spinner"></div>
         <p>Yükleniyor...</p>
@@ -100,8 +126,15 @@ export default {
       userProgress: loadProgress(),
       levels: levels,
       visibleLevels: [],
-      unsubscribeProgress: null
+      unsubscribeProgress: null,
+      isMobileMenuOpen: false,
+      isMobileViewport: false
     };
+  },
+  watch: {
+    $route() {
+      this.closeMobileMenu();
+    }
   },
   async created() {
     this.userProgress = loadProgress();
@@ -124,11 +157,19 @@ export default {
       this.userProgress = progress;
       this.filterVisibleLevels();
     });
+
+    this.updateViewportState();
+    window.addEventListener('resize', this.updateViewportState);
+    window.addEventListener('keydown', this.handleKeydown);
   },
   beforeUnmount() {
     if (typeof this.unsubscribeProgress === 'function') {
       this.unsubscribeProgress();
     }
+
+    window.removeEventListener('resize', this.updateViewportState);
+    window.removeEventListener('keydown', this.handleKeydown);
+    document.body.style.overflow = '';
   },
   methods: {
     filterVisibleLevels() {
@@ -137,6 +178,37 @@ export default {
     getLevelIcon(order) {
       const icons = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣'];
       return icons[order - 1] || `${order}`;
+    },
+    updateViewportState() {
+      this.isMobileViewport = window.innerWidth <= 1024;
+      if (!this.isMobileViewport) {
+        this.isMobileMenuOpen = false;
+      }
+      this.syncBodyScrollState();
+    },
+    syncBodyScrollState() {
+      document.body.style.overflow = this.isMobileViewport && this.isMobileMenuOpen ? 'hidden' : '';
+    },
+    toggleMobileMenu() {
+      if (!this.isMobileViewport) return;
+      this.isMobileMenuOpen = !this.isMobileMenuOpen;
+      this.syncBodyScrollState();
+    },
+    closeMobileMenu() {
+      if (!this.isMobileMenuOpen) return;
+      this.isMobileMenuOpen = false;
+      this.syncBodyScrollState();
+    },
+    handleSidebarClick(event) {
+      if (!this.isMobileViewport) return;
+      if (!(event.target instanceof Element)) return;
+      if (!event.target.closest('a.nav-item')) return;
+      this.closeMobileMenu();
+    },
+    handleKeydown(event) {
+      if (event.key === 'Escape') {
+        this.closeMobileMenu();
+      }
     }
   }
 }
@@ -168,6 +240,10 @@ body,
   display: flex;
   min-height: 100vh;
   width: 100%;
+}
+
+.sidebar-backdrop {
+  display: none;
 }
 
 /* Sidebar Styles */
@@ -251,6 +327,29 @@ body,
   position: relative;
   min-height: 100vh;
   min-width: 0;
+}
+
+.mobile-topbar {
+  display: none;
+}
+
+.mobile-menu-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #ced4da;
+  background: #ffffff;
+  color: #212529;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mobile-menu-icon {
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .content-shell {
@@ -403,17 +502,33 @@ body,
 }
 
 @media (max-width: 1024px) {
-  .app-container {
-    flex-direction: column;
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(88vw, 320px);
+    height: 100vh;
+    z-index: 1200;
+    border-right: 1px solid #e9ecef;
+    transform: translateX(-105%);
+    transition: transform 0.24s ease, box-shadow 0.24s ease;
+    box-shadow: none;
+    padding: 0.75rem 0;
   }
 
-  .sidebar {
-    width: 100%;
-    height: auto;
-    max-height: none;
-    border-right: none;
-    border-bottom: 1px solid #e9ecef;
-    padding: 0.75rem 0;
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    border: none;
+    z-index: 1100;
   }
 
   .sidebar-header {
@@ -427,17 +542,18 @@ body,
   }
 
   .primary-nav,
-  .resources-nav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.35rem;
+  .resources-nav,
+  .levels-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
     padding: 0 0.9rem;
   }
 
-  .levels-nav {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.35rem;
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.85rem;
   }
 
   .nav-item {
@@ -447,9 +563,10 @@ body,
   }
 
   .main-content {
+    width: 100%;
     max-width: 100%;
-    padding: 1rem;
-    min-height: auto;
+    padding: 0.9rem;
+    min-height: 100vh;
   }
 
   .content-shell {
@@ -465,18 +582,16 @@ body,
 }
 
 @media (max-width: 640px) {
-  .primary-nav,
-  .resources-nav,
-  .levels-nav {
-    grid-template-columns: 1fr;
-  }
-
   .sidebar-logo {
     font-size: 1rem;
   }
 
   .sidebar {
     padding-bottom: 0.5rem;
+  }
+
+  .main-content {
+    padding: 0.75rem;
   }
 }
 </style> 
