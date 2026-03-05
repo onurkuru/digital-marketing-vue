@@ -353,21 +353,30 @@ async function sendViaPostmark(payload, options) {
 }
 
 async function sendEmail(payload) {
-  const provider = String(process.env.EMAIL_PROVIDER || '').trim().toLowerCase();
+  const provider = String(
+    process.env.EMAIL_PROVIDER || process.env.NETLIFY_EMAILS_PROVIDER || ''
+  ).trim().toLowerCase();
   const netlifyEmailsSecret = process.env.NETLIFY_EMAILS_SECRET;
-  const postmarkToken = process.env.POSTMARK_SERVER_TOKEN;
+  const postmarkToken = firstNonEmpty(
+    process.env.POSTMARK_SERVER_TOKEN,
+    process.env.NETLIFY_EMAILS_PROVIDER_API_KEY
+  );
   const resendApiKey = process.env.RESEND_API_KEY;
   let fromEmail = firstNonEmpty(
     process.env.SUBMISSION_FROM_EMAIL,
+    process.env.SUBMISSION_EMAIL,
     process.env.MAIL_FROM,
     process.env.FROM_EMAIL,
-    process.env.POSTMARK_FROM_EMAIL
+    process.env.POSTMARK_FROM_EMAIL,
+    process.env.NETLIFY_EMAILS_FROM
   );
   let toEmail = firstNonEmpty(
     process.env.SUBMISSION_TO_EMAIL,
+    process.env.SUBMISSION_EMAIL,
     process.env.MAIL_TO,
     process.env.TO_EMAIL,
-    process.env.POSTMARK_TO_EMAIL
+    process.env.POSTMARK_TO_EMAIL,
+    process.env.NETLIFY_EMAILS_TO
   );
 
   if (!fromEmail && toEmail) {
@@ -457,26 +466,37 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'GET') {
     const mode = sanitizeText(event?.queryStringParameters?.mode, 30).toLowerCase();
     if (mode === 'health') {
+      const provider = String(
+        process.env.EMAIL_PROVIDER || process.env.NETLIFY_EMAILS_PROVIDER || ''
+      ).trim().toLowerCase() || 'auto';
       const fromEmail = firstNonEmpty(
         process.env.SUBMISSION_FROM_EMAIL,
+        process.env.SUBMISSION_EMAIL,
         process.env.MAIL_FROM,
         process.env.FROM_EMAIL,
-        process.env.POSTMARK_FROM_EMAIL
+        process.env.POSTMARK_FROM_EMAIL,
+        process.env.NETLIFY_EMAILS_FROM
       );
       const toEmail = firstNonEmpty(
         process.env.SUBMISSION_TO_EMAIL,
+        process.env.SUBMISSION_EMAIL,
         process.env.MAIL_TO,
         process.env.TO_EMAIL,
-        process.env.POSTMARK_TO_EMAIL
+        process.env.POSTMARK_TO_EMAIL,
+        process.env.NETLIFY_EMAILS_TO
+      );
+      const postmarkToken = firstNonEmpty(
+        process.env.POSTMARK_SERVER_TOKEN,
+        process.env.NETLIFY_EMAILS_PROVIDER_API_KEY
       );
 
       return jsonResponse(200, {
         email: {
-          provider: String(process.env.EMAIL_PROVIDER || '').trim().toLowerCase() || 'auto',
+          provider,
           fromConfigured: Boolean(fromEmail),
           toConfigured: Boolean(toEmail),
           netlifyEmailsSecretConfigured: Boolean(process.env.NETLIFY_EMAILS_SECRET),
-          postmarkTokenConfigured: Boolean(process.env.POSTMARK_SERVER_TOKEN),
+          postmarkTokenConfigured: Boolean(postmarkToken),
           resendApiKeyConfigured: Boolean(process.env.RESEND_API_KEY)
         }
       });
