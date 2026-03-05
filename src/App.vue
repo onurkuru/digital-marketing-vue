@@ -16,9 +16,10 @@
       @click="handleSidebarClick"
     >
       <div class="sidebar-header">
-        <div class="sidebar-logo">
-          <span class="icon">📚</span>
-          <span>InvestAZ Digital Pazarlama</span>
+        <div class="sidebar-logo" aria-label="InvestU Marketing">
+          <span class="brand-word">INVEST</span>
+          <span class="brand-mark"><span>U</span></span>
+          <span class="brand-sub">MARKETING</span>
         </div>
       </div>
       
@@ -106,7 +107,7 @@
       </div>
       <div v-else class="content-shell">
         <router-view />
-        <footer class="app-footer">© ONUR KURU</footer>
+        <footer class="app-footer">© InvestU - Marketing</footer>
       </div>
     </main>
   </div>
@@ -267,9 +268,43 @@ body,
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  font-size: 1.1rem;
+  gap: 0.45rem;
+  min-height: 46px;
+}
+
+.brand-word {
+  font-size: 1.95rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  color: #11151a;
+  line-height: 1;
+}
+
+.brand-mark {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  border-bottom-right-radius: 16px;
+  background: #0f919a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #f8fcff;
+  font-size: 2.05rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.brand-mark > span {
+  transform: translateY(-2px);
+}
+
+.brand-sub {
+  font-size: 1.02rem;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  color: #363a40;
+  line-height: 1;
 }
 
 .sidebar-section {
@@ -582,8 +617,18 @@ body,
 }
 
 @media (max-width: 640px) {
-  .sidebar-logo {
-    font-size: 1rem;
+  .brand-word {
+    font-size: 1.65rem;
+  }
+
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    font-size: 1.7rem;
+  }
+
+  .brand-sub {
+    font-size: 0.92rem;
   }
 
   .sidebar {
