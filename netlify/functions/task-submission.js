@@ -357,11 +357,31 @@ async function sendEmail(payload) {
   const netlifyEmailsSecret = process.env.NETLIFY_EMAILS_SECRET;
   const postmarkToken = process.env.POSTMARK_SERVER_TOKEN;
   const resendApiKey = process.env.RESEND_API_KEY;
-  const fromEmail = process.env.SUBMISSION_FROM_EMAIL;
-  const toEmail = process.env.SUBMISSION_TO_EMAIL;
+  let fromEmail = firstNonEmpty(
+    process.env.SUBMISSION_FROM_EMAIL,
+    process.env.MAIL_FROM,
+    process.env.FROM_EMAIL,
+    process.env.POSTMARK_FROM_EMAIL
+  );
+  let toEmail = firstNonEmpty(
+    process.env.SUBMISSION_TO_EMAIL,
+    process.env.MAIL_TO,
+    process.env.TO_EMAIL,
+    process.env.POSTMARK_TO_EMAIL
+  );
+
+  if (!fromEmail && toEmail) {
+    fromEmail = toEmail;
+  }
+  if (!toEmail && fromEmail) {
+    toEmail = fromEmail;
+  }
 
   if (!fromEmail || !toEmail) {
-    throw new AppError('Mail servisi yapılandırması eksik.', 500);
+    const missing = [];
+    if (!fromEmail) missing.push('SUBMISSION_FROM_EMAIL');
+    if (!toEmail) missing.push('SUBMISSION_TO_EMAIL');
+    throw new AppError(`Mail servisi yapılandırması eksik: ${missing.join(', ')}`, 500);
   }
 
   if (provider === 'netlify') {
