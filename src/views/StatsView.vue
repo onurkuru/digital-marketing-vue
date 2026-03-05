@@ -1,427 +1,202 @@
 <template>
   <div class="stats-view">
     <div class="page-header">
-      <h1>İstatistikler ve Analizler</h1>
-      <p class="subtitle">Öğrenme yolculuğunuza dair detaylı istatistikler ve analizler</p>
+      <h1>İstatistikler</h1>
+      <p class="subtitle">Canlı ilerleme, quiz ve teslim performansınız</p>
     </div>
-    
+
     <div class="stats-overview">
       <div class="stat-card">
         <div class="stat-icon">📈</div>
         <div class="stat-value">{{ overallProgress }}%</div>
         <div class="stat-label">Genel İlerleme</div>
       </div>
-      
       <div class="stat-card">
-        <div class="stat-icon">⏱️</div>
-        <div class="stat-value">{{ studyTimeFormatted }}</div>
-        <div class="stat-label">Toplam Çalışma Süresi</div>
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">{{ completedTasks }}/{{ totalTasks }}</div>
+        <div class="stat-label">Tamamlanan Görev</div>
       </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">🏆</div>
-        <div class="stat-value">{{ pointsEarned }}</div>
-        <div class="stat-label">Toplam Puan</div>
-      </div>
-      
       <div class="stat-card">
         <div class="stat-icon">📝</div>
         <div class="stat-value">{{ averageQuizScore }}%</div>
-        <div class="stat-label">Ortalama Quiz Skoru</div>
+        <div class="stat-label">Quiz Ortalaması</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📤</div>
+        <div class="stat-value">{{ submissions.length }}</div>
+        <div class="stat-label">Gönderilen Teslim</div>
       </div>
     </div>
-    
-    <div class="stats-charts">
-      <div class="chart-container card">
-        <div class="chart-header">
-          <h2>Haftalık Aktivite</h2>
-          <div class="chart-options">
-            <select v-model="activityTimeRange">
-              <option value="week">Son 1 Hafta</option>
-              <option value="month">Son 1 Ay</option>
-              <option value="3months">Son 3 Ay</option>
-            </select>
+
+    <div class="card">
+      <h2>Seviye Bazlı İlerleme</h2>
+      <div class="level-list">
+        <div v-for="item in levelProgress" :key="item.id" class="level-item">
+          <div class="level-head">
+            <span>{{ item.title }}</span>
+            <span>{{ item.completed }}/{{ item.total }} ({{ item.progress }}%)</span>
           </div>
-        </div>
-        
-        <div class="activity-chart">
-          <div class="chart-days">
-            <div v-for="day in activityData" :key="day.date" class="chart-day">
-              <div 
-                class="chart-bar" 
-                :style="{ height: `${day.percentage}%` }"
-                :class="{
-                  'low': day.percentage < 30,
-                  'medium': day.percentage >= 30 && day.percentage < 70,
-                  'high': day.percentage >= 70
-                }"
-              ></div>
-              <div class="chart-label">{{ formatDayLabel(day.date) }}</div>
-            </div>
-          </div>
-          <div class="chart-legend">
-            <div class="legend-item">
-              <div class="legend-color high"></div>
-              <div class="legend-text">1 saat+</div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color medium"></div>
-              <div class="legend-text">30dk - 1 saat</div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color low"></div>
-              <div class="legend-text">< 30dk</div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="chart-container card">
-        <div class="chart-header">
-          <h2>Modül İlerleme Durumu</h2>
-        </div>
-        
-        <div class="progress-chart">
-          <div v-for="stage in stageProgress" :key="stage.id" class="stage-progress">
-            <div class="stage-title">{{ stage.title }}</div>
-            <div class="progress-bar-container">
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: `${stage.progress}%` }"></div>
-              </div>
-              <div class="progress-percentage">{{ stage.progress }}%</div>
-            </div>
-            <div class="progress-detail">
-              <span>{{ stage.completed }}/{{ stage.total }} Modül</span>
-            </div>
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: `${item.progress}%` }"></div>
           </div>
         </div>
       </div>
     </div>
-    
-    <div class="stats-details">
-      <div class="performance-container card">
-        <div class="chart-header">
-          <h2>Quiz Performansı</h2>
-          <div class="chart-options">
-            <select v-model="quizFilter">
-              <option value="all">Tüm Quizler</option>
-              <option value="recent">Son 5 Quiz</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="quiz-performance">
-          <table class="quiz-table">
-            <thead>
-              <tr>
-                <th>Quiz Adı</th>
-                <th>Tarih</th>
-                <th>Doğru</th>
-                <th>Yanlış</th>
-                <th>Skor</th>
-                <th>Durum</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="quiz in filteredQuizzes" :key="quiz.id">
-                <td>{{ quiz.title }}</td>
-                <td>{{ formatDate(quiz.date) }}</td>
-                <td>{{ quiz.correctAnswers }}</td>
-                <td>{{ quiz.wrongAnswers }}</td>
-                <td class="quiz-score">{{ getQuizScorePercentage(quiz) }}%</td>
-                <td>
-                  <span 
-                    class="quiz-status" 
-                    :class="getQuizStatusClass(quiz)"
-                  >
-                    {{ getQuizStatusText(quiz) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+
+    <div class="stats-grid">
+      <div class="card">
+        <h2>Quiz Sonuçları</h2>
+        <table v-if="quizRows.length" class="simple-table">
+          <thead>
+            <tr>
+              <th>Seviye</th>
+              <th>Skor</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in quizRows" :key="row.levelId">
+              <td>{{ row.levelTitle }}</td>
+              <td>{{ row.score }}%</td>
+              <td>
+                <span class="badge" :class="getQuizBadgeClass(row.score)">{{ getQuizStatusText(row.score) }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else class="empty-text">Henüz quiz sonucu bulunmuyor.</p>
       </div>
-      
-      <div class="time-distribution-container card">
-        <div class="chart-header">
-          <h2>Zaman Dağılımı</h2>
-        </div>
-        
-        <div class="time-distribution">
-          <div class="distribution-chart">
-            <div v-for="(category, index) in timeDistribution" :key="category.type" class="distribution-segment">
-              <div 
-                class="segment-fill" 
-                :style="{
-                  width: `${category.percentage}%`,
-                  backgroundColor: getSegmentColor(index)
-                }"
-              ></div>
-            </div>
-          </div>
-          
-          <div class="distribution-legend">
-            <div v-for="(category, index) in timeDistribution" :key="category.type" class="legend-item">
-              <div class="legend-color" :style="{ backgroundColor: getSegmentColor(index) }"></div>
-              <div class="legend-text">
-                <span>{{ category.label }}</span>
-                <span class="legend-percentage">{{ category.percentage }}%</span>
-              </div>
+
+      <div class="card">
+        <h2>Son Teslimler</h2>
+        <div v-if="recentSubmissions.length" class="submission-list">
+          <div v-for="item in recentSubmissions" :key="item.id" class="submission-item">
+            <div class="submission-title">{{ item.subject || item.taskTitle || 'Görev Teslimi' }}</div>
+            <div class="submission-meta">
+              <span>{{ item.taskTitle || '-' }}</span>
+              <span>{{ formatDateTime(item.submittedAt) }}</span>
+              <span>{{ item.attachmentCount || 0 }} dosya</span>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-    
-    <div class="stats-achievements card">
-      <div class="chart-header">
-        <h2>Başarılar ve Rozetler</h2>
-      </div>
-      
-      <div class="achievements-grid">
-        <div 
-          v-for="achievement in achievements" 
-          :key="achievement.id" 
-          class="achievement-item"
-          :class="{ 'locked': !achievement.earned }"
-        >
-          <div class="achievement-icon">{{ achievement.icon }}</div>
-          <div class="achievement-details">
-            <div class="achievement-title">{{ achievement.title }}</div>
-            <div class="achievement-description">{{ achievement.description }}</div>
-            <div v-if="achievement.earned" class="achievement-earned">
-              Kazanıldı: {{ formatDate(achievement.earnedDate) }}
-            </div>
-            <div v-else class="achievement-progress">
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: `${achievement.progress}%` }"></div>
-              </div>
-              <div class="progress-text">{{ achievement.progress }}%</div>
-            </div>
-          </div>
-        </div>
+        <p v-else class="empty-text">Henüz gönderilen teslim yok.</p>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { levels } from '@/utils/marketingData/levels';
+import { allTasks } from '@/utils/marketingData/learning-content';
+import { loadProgress, subscribeProgress } from '@/utils/progressStore';
+import { loadSubmissions, subscribeSubmissions } from '@/utils/submissionStore';
+
 export default {
   name: 'StatsView',
   data() {
     return {
-      // Overall stats
-      overallProgress: 43,
-      studyTimeHours: 38,
-      studyTimeMinutes: 45,
-      pointsEarned: 2750,
-      averageQuizScore: 82,
-      
-      // Activity chart
-      activityTimeRange: 'week',
-      activityData: [
-        { date: '2023-08-17', minutes: 45, percentage: 45 },
-        { date: '2023-08-18', minutes: 75, percentage: 75 },
-        { date: '2023-08-19', minutes: 30, percentage: 30 },
-        { date: '2023-08-20', minutes: 0, percentage: 0 },
-        { date: '2023-08-21', minutes: 60, percentage: 60 },
-        { date: '2023-08-22', minutes: 90, percentage: 90 },
-        { date: '2023-08-23', minutes: 25, percentage: 25 }
-      ],
-      
-      // Stage progress
-      stageProgress: [
-        { 
-          id: 'stage-1', 
-          title: 'Dijital Pazarlama Temelleri', 
-          progress: 85, 
-          completed: 6, 
-          total: 7 
-        },
-        { 
-          id: 'stage-2', 
-          title: 'SEO ve İçerik Stratejisi', 
-          progress: 60, 
-          completed: 3, 
-          total: 5 
-        },
-        { 
-          id: 'stage-3', 
-          title: 'Sosyal Medya Pazarlaması', 
-          progress: 20, 
-          completed: 1, 
-          total: 5 
-        },
-        { 
-          id: 'stage-4', 
-          title: 'Ücretli Reklamcılık', 
-          progress: 0, 
-          completed: 0, 
-          total: 4 
-        },
-        { 
-          id: 'stage-5', 
-          title: 'Veri Analizi ve Raporlama', 
-          progress: 0, 
-          completed: 0, 
-          total: 4 
-        }
-      ],
-      
-      // Quiz data
-      quizFilter: 'all',
-      quizzes: [
-        {
-          id: 'quiz-101',
-          title: 'Dijital Pazarlama Temelleri',
-          date: '2023-08-10',
-          totalQuestions: 10,
-          correctAnswers: 9,
-          wrongAnswers: 1
-        },
-        {
-          id: 'quiz-102',
-          title: 'Hedef Kitle Analizi',
-          date: '2023-08-12',
-          totalQuestions: 15,
-          correctAnswers: 12,
-          wrongAnswers: 3
-        },
-        {
-          id: 'quiz-103',
-          title: 'Dijital Pazarlama Stratejisi',
-          date: '2023-08-15',
-          totalQuestions: 10,
-          correctAnswers: 7,
-          wrongAnswers: 3
-        },
-        {
-          id: 'quiz-104',
-          title: 'SEO Temelleri',
-          date: '2023-08-18',
-          totalQuestions: 15,
-          correctAnswers: 13,
-          wrongAnswers: 2
-        },
-        {
-          id: 'quiz-105',
-          title: 'İçerik Pazarlaması',
-          date: '2023-08-21',
-          totalQuestions: 10,
-          correctAnswers: 8,
-          wrongAnswers: 2
-        }
-      ],
-      
-      // Time distribution
-      timeDistribution: [
-        { type: 'learning', label: 'Öğrenim Materyalleri', percentage: 40 },
-        { type: 'practice', label: 'Uygulama', percentage: 25 },
-        { type: 'quiz', label: 'Quizler', percentage: 15 },
-        { type: 'assignment', label: 'Ödevler', percentage: 20 }
-      ],
-      
-      // Achievements
-      achievements: [
-        {
-          id: 'achievement-1',
-          title: 'Dijital Pazarlamaya İlk Adım',
-          description: 'İlk modülü tamamlayın',
-          icon: '🏆',
-          earned: true,
-          earnedDate: '2023-08-10'
-        },
-        {
-          id: 'achievement-2',
-          title: '3 Gün Üst Üste Çalışma',
-          description: '3 gün üst üste platforma giriş yapın',
-          icon: '🔥',
-          earned: true,
-          earnedDate: '2023-08-15'
-        },
-        {
-          id: 'achievement-3',
-          title: 'İlk 5 Görevi Tamamla',
-          description: '5 görevi başarıyla tamamlayın',
-          icon: '🌟',
-          earned: true,
-          earnedDate: '2023-08-18'
-        },
-        {
-          id: 'achievement-4',
-          title: '90% Quiz Skoru',
-          description: 'En az 5 quizde %90 ve üzeri skor alın',
-          icon: '🧠',
-          earned: false,
-          progress: 60
-        },
-        {
-          id: 'achievement-5',
-          title: 'İlk Seviyeyi Tamamla',
-          description: 'Dijital Pazarlama Temelleri seviyesini tamamlayın',
-          icon: '🎯',
-          earned: false,
-          progress: 85
-        },
-        {
-          id: 'achievement-6',
-          title: 'Üstat Paylaşımcı',
-          description: '10 ödev ve proje gönderin',
-          icon: '📚',
-          earned: false,
-          progress: 30
-        }
-      ]
-    }
+      levels,
+      tasks: allTasks,
+      progress: loadProgress(),
+      submissions: loadSubmissions(),
+      unsubscribeProgress: null,
+      unsubscribeSubmissions: null
+    };
   },
   computed: {
-    studyTimeFormatted() {
-      return `${this.studyTimeHours} saat ${this.studyTimeMinutes} dk`
+    totalTasks() {
+      return this.tasks.length;
     },
-    filteredQuizzes() {
-      if (this.quizFilter === 'recent') {
-        return [...this.quizzes].slice(-5)
-      }
-      return this.quizzes
+    completedTasks() {
+      return this.progress.completedTasks.length;
+    },
+    overallProgress() {
+      if (!this.totalTasks) return 0;
+      return Math.round((this.completedTasks / this.totalTasks) * 100);
+    },
+    quizRows() {
+      const results = this.progress.quizResults || {};
+      return Object.entries(results)
+        .map(([levelId, score]) => {
+          const level = this.levels.find((item) => item.id === String(levelId));
+          return {
+            levelId: String(levelId),
+            levelTitle: level?.title || `Seviye ${levelId}`,
+            score: Number(score || 0)
+          };
+        })
+        .sort((a, b) => Number(a.levelId) - Number(b.levelId));
+    },
+    averageQuizScore() {
+      if (!this.quizRows.length) return 0;
+      const total = this.quizRows.reduce((sum, row) => sum + row.score, 0);
+      return Math.round(total / this.quizRows.length);
+    },
+    levelProgress() {
+      return this.levels.map((level) => {
+        const levelTasks = this.tasks.filter((task) => String(task.levelId) === String(level.id));
+        const completed = levelTasks.filter((task) => this.progress.completedTasks.includes(String(task.id))).length;
+        const total = levelTasks.length;
+        const progress = total ? Math.round((completed / total) * 100) : 0;
+
+        return {
+          id: level.id,
+          title: level.title,
+          completed,
+          total,
+          progress
+        };
+      });
+    },
+    recentSubmissions() {
+      return [...this.submissions]
+        .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0))
+        .slice(0, 8);
+    }
+  },
+  mounted() {
+    this.unsubscribeProgress = subscribeProgress((progress) => {
+      this.progress = progress;
+    });
+
+    this.unsubscribeSubmissions = subscribeSubmissions((submissions) => {
+      this.submissions = submissions;
+    });
+  },
+  beforeUnmount() {
+    if (typeof this.unsubscribeProgress === 'function') {
+      this.unsubscribeProgress();
+    }
+    if (typeof this.unsubscribeSubmissions === 'function') {
+      this.unsubscribeSubmissions();
     }
   },
   methods: {
-    formatDate(dateString) {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('tr-TR', { 
-        day: 'numeric', 
-        month: 'long' 
-      })
+    formatDateTime(value) {
+      const date = new Date(value || 0);
+      if (!Number.isFinite(date.getTime())) return '-';
+      return date.toLocaleString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
     },
-    formatDayLabel(dateString) {
-      const date = new Date(dateString)
-      const days = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt']
-      return days[date.getDay()]
+    getQuizStatusText(score) {
+      if (score >= 85) return 'Mükemmel';
+      if (score >= 70) return 'İyi';
+      if (score >= 50) return 'Orta';
+      return 'Geliştirilmeli';
     },
-    getQuizScorePercentage(quiz) {
-      return Math.round((quiz.correctAnswers / quiz.totalQuestions) * 100)
-    },
-    getQuizStatusClass(quiz) {
-      const score = this.getQuizScorePercentage(quiz)
-      if (score >= 85) return 'success'
-      if (score >= 70) return 'good'
-      if (score >= 50) return 'average'
-      return 'poor'
-    },
-    getQuizStatusText(quiz) {
-      const score = this.getQuizScorePercentage(quiz)
-      if (score >= 85) return 'Mükemmel'
-      if (score >= 70) return 'İyi'
-      if (score >= 50) return 'Orta'
-      return 'Zayıf'
-    },
-    getSegmentColor(index) {
-      const colors = ['#4e73df', '#1cc88a', '#f6c23e', '#e74a3b']
-      return colors[index % colors.length]
+    getQuizBadgeClass(score) {
+      if (score >= 85) return 'success';
+      if (score >= 70) return 'good';
+      if (score >= 50) return 'average';
+      return 'poor';
     }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -430,7 +205,7 @@ export default {
 }
 
 .page-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 h1 {
@@ -445,388 +220,176 @@ h1 {
 
 .stats-overview {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .stat-card {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  padding: 1rem;
   text-align: center;
   border: 1px solid #e9ecef;
 }
 
 .stat-icon {
-  font-size: 2rem;
-  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .stat-value {
-  font-size: 1.75rem;
+  font-size: 1.45rem;
   font-weight: 700;
-  margin-bottom: 0.5rem;
 }
 
 .stat-label {
   color: #6c757d;
-  font-size: 0.9rem;
-}
-
-.stats-charts {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.stats-details {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.86rem;
 }
 
 .card {
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  padding: 1.2rem;
   border: 1px solid #e9ecef;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-}
-
-.chart-options select {
-  padding: 0.375rem 0.75rem;
-  border-radius: 4px;
-  border: 1px solid #ced4da;
-  background-color: #fff;
-  font-size: 0.9rem;
-}
-
-/* Activity Chart */
-.activity-chart {
-  height: 250px;
-}
-
-.chart-days {
-  display: flex;
-  justify-content: space-between;
-  height: 200px;
-  align-items: flex-end;
   margin-bottom: 1rem;
 }
 
-.chart-day {
-  flex: 1;
+h2 {
+  font-size: 1.15rem;
+  margin-bottom: 0.85rem;
+}
+
+.level-list {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 0.75rem;
 }
 
-.chart-bar {
-  width: 80%;
-  max-width: 30px;
-  min-height: 5px;
-  border-radius: 4px 4px 0 0;
-  transition: height 0.3s;
+.level-item {
+  border: 1px solid #eef1f4;
+  border-radius: 8px;
+  padding: 0.65rem;
+  background: #f8f9fa;
 }
 
-.chart-bar.low {
-  background-color: #e74a3b;
-}
-
-.chart-bar.medium {
-  background-color: #f6c23e;
-}
-
-.chart-bar.high {
-  background-color: #1cc88a;
-}
-
-.chart-label {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: #6c757d;
-}
-
-.chart-legend {
+.level-head {
   display: flex;
-  justify-content: flex-end;
-  gap: 1.5rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
-}
-
-.legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-}
-
-.legend-color.high {
-  background-color: #1cc88a;
-}
-
-.legend-color.medium {
-  background-color: #f6c23e;
-}
-
-.legend-color.low {
-  background-color: #e74a3b;
-}
-
-.legend-text {
-  font-size: 0.85rem;
-  color: #6c757d;
-}
-
-/* Stage Progress */
-.stage-progress {
-  margin-bottom: 1.25rem;
-}
-
-.stage-progress:last-child {
-  margin-bottom: 0;
-}
-
-.stage-title {
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.progress-bar-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.9rem;
+  margin-bottom: 0.45rem;
 }
 
 .progress-bar {
-  flex: 1;
-  height: 10px;
-  background-color: #e9ecef;
-  border-radius: 100px;
+  height: 8px;
+  border-radius: 999px;
+  background: #e9ecef;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background-color: #4e73df;
-  border-radius: 100px;
-  transition: width 0.3s;
+  background: #0d6efd;
 }
 
-.progress-percentage {
-  font-weight: 600;
-  min-width: 40px;
-  text-align: right;
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
 }
 
-.progress-detail {
-  color: #6c757d;
-  font-size: 0.85rem;
-}
-
-/* Quiz Table */
-.quiz-performance {
-  overflow-x: auto;
-}
-
-.quiz-table {
+.simple-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.quiz-table th,
-.quiz-table td {
-  padding: 0.75rem;
+.simple-table th,
+.simple-table td {
+  padding: 0.55rem;
+  border-bottom: 1px solid #eef1f4;
   text-align: left;
-  border-bottom: 1px solid #e9ecef;
+  font-size: 0.9rem;
 }
 
-.quiz-table th {
-  font-weight: 600;
-  color: #495057;
-}
-
-.quiz-score {
-  font-weight: 600;
-}
-
-.quiz-status {
+.badge {
   display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 600;
 }
 
-.quiz-status.success {
-  background-color: #d4edda;
+.badge.success {
+  background: #d4edda;
   color: #155724;
 }
 
-.quiz-status.good {
-  background-color: #d1ecf1;
+.badge.good {
+  background: #d1ecf1;
   color: #0c5460;
 }
 
-.quiz-status.average {
-  background-color: #fff3cd;
+.badge.average {
+  background: #fff3cd;
   color: #856404;
 }
 
-.quiz-status.poor {
-  background-color: #f8d7da;
+.badge.poor {
+  background: #f8d7da;
   color: #721c24;
 }
 
-/* Time Distribution */
-.time-distribution {
-  margin-top: 2rem;
-}
-
-.distribution-chart {
+.submission-list {
   display: flex;
-  height: 30px;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 1.5rem;
+  flex-direction: column;
+  gap: 0.6rem;
 }
 
-.distribution-segment {
-  height: 100%;
-  position: relative;
-}
-
-.segment-fill {
-  height: 100%;
-  width: 100%;
-}
-
-.distribution-legend {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-}
-
-.legend-percentage {
-  font-weight: 600;
-  margin-left: 0.5rem;
-}
-
-/* Achievements */
-.stats-achievements {
-  margin-bottom: 1.5rem;
-}
-
-.achievements-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-}
-
-.achievement-item {
-  display: flex;
-  gap: 1rem;
-  padding: 1.25rem;
+.submission-item {
+  border: 1px solid #eef1f4;
   border-radius: 8px;
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
+  padding: 0.6rem;
+  background: #f8f9fa;
 }
 
-.achievement-item.locked {
-  opacity: 0.7;
-}
-
-.achievement-icon {
-  font-size: 2.5rem;
-  flex-shrink: 0;
-}
-
-.achievement-details {
-  flex: 1;
-}
-
-.achievement-title {
+.submission-title {
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
-.achievement-description {
-  color: #6c757d;
-  font-size: 0.9rem;
-  margin-bottom: 1rem;
-}
-
-.achievement-earned {
-  color: #28a745;
-  font-weight: 500;
-  font-size: 0.85rem;
-}
-
-.achievement-progress {
+.submission-meta {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  color: #6c757d;
+  font-size: 0.82rem;
 }
 
-.progress-text {
-  font-size: 0.85rem;
-  font-weight: 500;
+.empty-text {
+  color: #6c757d;
 }
 
 @media (max-width: 992px) {
   .stats-overview {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  
-  .stats-charts,
-  .stats-details {
+
+  .stats-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .achievements-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .stats-overview {
     grid-template-columns: 1fr;
   }
-  
-  .chart-header {
+
+  .level-head {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-  
-  .distribution-legend {
-    grid-template-columns: 1fr;
-  }
-  
-  .achievements-grid {
-    grid-template-columns: 1fr;
   }
 }
-</style> 
+</style>

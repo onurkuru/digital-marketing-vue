@@ -199,6 +199,7 @@ import {
   markTaskStarted,
   subscribeProgress
 } from '@/utils/progressStore';
+import { addSubmission } from '@/utils/submissionStore';
 
 const MAX_FILE_COUNT = 3;
 const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
@@ -438,6 +439,24 @@ export default {
         if (!response.ok) {
           throw new Error(result.error || 'Teslim gönderilemedi.');
         }
+
+        addSubmission({
+          taskId: this.task.id,
+          taskTitle: this.task.title,
+          levelId: this.task.levelId,
+          fullName: this.submissionForm.fullName,
+          senderEmail: this.submissionForm.senderEmail,
+          subject: this.submissionForm.subject,
+          details: this.submissionForm.details,
+          notes: this.submissionNotes,
+          status: 'pending',
+          submittedAt: new Date().toISOString(),
+          attachments: this.submissionForm.attachments.map((item) => ({
+            name: item.name,
+            size: item.size,
+            type: item.type
+          }))
+        });
 
         markTaskCompleted(this.id);
         this.completedAt = new Date().toLocaleDateString('tr-TR');
