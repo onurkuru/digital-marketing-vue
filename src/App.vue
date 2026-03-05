@@ -16,10 +16,11 @@
       @click="handleSidebarClick"
     >
       <div class="sidebar-header">
-        <div class="sidebar-logo" aria-label="InvestU Marketing">
-          <span class="brand-word">INVEST</span>
-          <span class="brand-mark"><span>U</span></span>
-          <span class="brand-sub">MARKETING</span>
+        <div class="sidebar-logo">
+          <a class="sidebar-logo-link" href="https://investu-marketing.netlify.app/">
+            <img src="@/assets/investu-logo.png" alt="investu-logo" class="sidebar-logo-image" />
+          </a>
+          <span class="sidebar-logo-caption">MARKETING</span>
         </div>
       </div>
       
@@ -267,44 +268,26 @@ body,
 
 .sidebar-logo {
   display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 46px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
 }
 
-.brand-word {
-  font-size: 1.95rem;
+.sidebar-logo-link {
+  width: 100%;
+}
+
+.sidebar-logo-image {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sidebar-logo-caption {
+  font-size: 0.64rem;
   font-weight: 700;
-  letter-spacing: 0.045em;
-  color: #11151a;
-  line-height: 1;
-}
-
-.brand-mark {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
-  border-bottom-right-radius: 16px;
-  background: #0f919a;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #f8fcff;
-  font-size: 2.05rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.brand-mark > span {
-  transform: translateY(-2px);
-}
-
-.brand-sub {
-  font-size: 1.02rem;
-  font-weight: 700;
-  letter-spacing: 0.015em;
-  color: #363a40;
-  line-height: 1;
+  letter-spacing: 0.14em;
+  color: #5a5f66;
 }
 
 .sidebar-section {
@@ -617,18 +600,8 @@ body,
 }
 
 @media (max-width: 640px) {
-  .brand-word {
-    font-size: 1.65rem;
-  }
-
-  .brand-mark {
-    width: 44px;
-    height: 44px;
-    font-size: 1.7rem;
-  }
-
-  .brand-sub {
-    font-size: 0.92rem;
+  .sidebar-logo-caption {
+    font-size: 0.58rem;
   }
 
   .sidebar {
