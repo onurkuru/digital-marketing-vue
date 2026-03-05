@@ -455,6 +455,33 @@ async function sendEmail(payload) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'GET') {
+    const mode = sanitizeText(event?.queryStringParameters?.mode, 30).toLowerCase();
+    if (mode === 'health') {
+      const fromEmail = firstNonEmpty(
+        process.env.SUBMISSION_FROM_EMAIL,
+        process.env.MAIL_FROM,
+        process.env.FROM_EMAIL,
+        process.env.POSTMARK_FROM_EMAIL
+      );
+      const toEmail = firstNonEmpty(
+        process.env.SUBMISSION_TO_EMAIL,
+        process.env.MAIL_TO,
+        process.env.TO_EMAIL,
+        process.env.POSTMARK_TO_EMAIL
+      );
+
+      return jsonResponse(200, {
+        email: {
+          provider: String(process.env.EMAIL_PROVIDER || '').trim().toLowerCase() || 'auto',
+          fromConfigured: Boolean(fromEmail),
+          toConfigured: Boolean(toEmail),
+          netlifyEmailsSecretConfigured: Boolean(process.env.NETLIFY_EMAILS_SECRET),
+          postmarkTokenConfigured: Boolean(process.env.POSTMARK_SERVER_TOKEN),
+          resendApiKeyConfigured: Boolean(process.env.RESEND_API_KEY)
+        }
+      });
+    }
+
     return jsonResponse(200, {
       captcha: resolveCaptchaRuntimeConfig()
     });
